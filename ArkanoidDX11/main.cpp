@@ -7,6 +7,7 @@
 #include "ColorShaderClass.h"
 #include "QuadClass.h"
 #include "PaddleClass.h"
+#include "BallClass.h"
 
 
 // Puntatore globale temporaneo alla classe DirectX
@@ -15,6 +16,7 @@ InputClass* g_Input = nullptr;
 ColorShaderClass* g_ColorShader = nullptr;
 QuadClass* g_Quad = nullptr;
 PaddleClass* g_Paddle = nullptr;
+BallClass* g_Ball = nullptr;
 
 
 // Funzione che Windows chiama ogni volta che succede qualcosa alla finestra
@@ -63,22 +65,31 @@ void Render()
 {
     g_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
 
-    // Mando il paddle alla pipeline.
+    // Disegno il paddle.
     g_Paddle->Render(g_D3D->GetDeviceContext());
 
-    // Attivo input layout, vertex shader e pixel shader.
     g_ColorShader->RenderShader(g_D3D->GetDeviceContext());
 
-    // Disegno il paddle.
     g_D3D->GetDeviceContext()->DrawIndexed(
         g_Paddle->GetIndexCount(),
         0,
         0
     );
 
+
+    // Disegno la palla.
+    g_Ball->Render(g_D3D->GetDeviceContext());
+
+    g_ColorShader->RenderShader(g_D3D->GetDeviceContext());
+
+    g_D3D->GetDeviceContext()->DrawIndexed(
+        g_Ball->GetIndexCount(),
+        0,
+        0
+    );
+
     g_D3D->EndScene();
 }
-
 
 
 
@@ -312,6 +323,64 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 
     /*
+        Inizializzazione Ball
+    */
+
+    g_Ball = new BallClass();
+
+    if (!g_Ball)
+    {
+        g_Paddle->Shutdown();
+        delete g_Paddle;
+        g_Paddle = nullptr;
+
+        g_ColorShader->Shutdown();
+        delete g_ColorShader;
+        g_ColorShader = nullptr;
+
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
+
+        delete g_Input;
+        g_Input = nullptr;
+
+        return -1;
+    }
+
+    if (!g_Ball->Initialize(
+        g_D3D->GetDevice(),
+        0.0f,    // x
+        -0.2f,   // y
+        0.06f    // size
+    ))
+    {
+        MessageBox(nullptr, L"Errore inizializzazione Ball!", L"Errore", MB_OK);
+
+        g_Ball->Shutdown();
+        delete g_Ball;
+        g_Ball = nullptr;
+
+        g_Paddle->Shutdown();
+        delete g_Paddle;
+        g_Paddle = nullptr;
+
+        g_ColorShader->Shutdown();
+        delete g_ColorShader;
+        g_ColorShader = nullptr;
+
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
+
+        delete g_Input;
+        g_Input = nullptr;
+
+        return -1;
+    }
+
+
+    /*
         Inizializzazione Quad
     */
 
@@ -396,6 +465,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
                 }
             }
 
+            if (g_Ball)
+            {
+                g_Ball->Update();
+            }
+
             Render();
         }
     }
@@ -409,6 +483,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         g_Quad->Shutdown();
         delete g_Quad;
         g_Quad = nullptr;
+    }
+
+    /*
+        Shutdown Ball
+    */
+
+    if (g_Ball)
+    {
+        g_Ball->Shutdown();
+        delete g_Ball;
+        g_Ball = nullptr;
     }
 
     /*
