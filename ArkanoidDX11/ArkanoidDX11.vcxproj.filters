@@ -21,9 +21,15 @@
     <ClCompile Include="D3DClass.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="InputClass.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3DClass.h">
+      <Filter>File di origine</Filter>
+    </ClInclude>
+    <ClInclude Include="InputClass.h">
       <Filter>File di origine</Filter>
     </ClInclude>
   </ItemGroup>

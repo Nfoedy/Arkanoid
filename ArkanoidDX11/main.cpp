@@ -3,11 +3,12 @@
 #include <windows.h> // Libreria per le API Win32
 
 #include "D3DClass.h"
+#include "InputClass.h"
 
 
 // Puntatore globale temporaneo alla classe DirectX
 D3DClass* g_D3D = nullptr;
-
+InputClass* g_Input = nullptr;
 
 
 // Funzione che Windows chiama ogni volta che succede qualcosa alla finestra
@@ -28,11 +29,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         // Quando viene premuto un tasto della tastiera
     case WM_KEYDOWN:
-        // Se viene premuto ESC
-        if (wParam == VK_ESCAPE)
+        // Se la classe input esiste, salvo il tasto come premuto
+        if (g_Input)
         {
-            // Chiudo il programma
-            PostQuitMessage(0);
+            g_Input->KeyDown(static_cast<unsigned int>(wParam));
+        }
+        return 0;
+
+        // Quando viene rilasciato un tasto della tastiera
+    case WM_KEYUP:
+        // Se la classe input esiste, salvo il tasto come rilasciato
+        if (g_Input)
+        {
+            g_Input->KeyUp(static_cast<unsigned int>(wParam));
         }
         return 0;
     }
@@ -156,6 +165,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 
     /*
+        Inizializzazione Input
+    */
+
+    g_Input = new InputClass();
+
+    if (!g_Input)
+    {
+        return -1;
+    }
+
+    g_Input->Initialize();
+
+
+
+    /*
         Inizializzazione DirectX
     */
 
@@ -200,6 +224,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         }
         else
         {
+            // Ora ESC viene controllato usando InputClass.
+            // WndProc aggiorna lo stato dei tasti, mentre il game loop decide cosa fare
+            if (g_Input && g_Input->IsKeyDown(VK_ESCAPE))
+            {
+                PostQuitMessage(0);
+            }
+
             Render();
         }
     }
@@ -214,6 +245,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         g_D3D->Shutdown();
         delete g_D3D;
         g_D3D = nullptr;
+    }
+
+
+    /*
+        Shutdown Input
+    */
+
+    if (g_Input)
+    {
+        delete g_Input;
+        g_Input = nullptr;
     }
 
 
