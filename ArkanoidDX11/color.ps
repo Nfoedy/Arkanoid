@@ -1,0 +1,13 @@
+// Input del Pixel Shader, deve combaciare con l'output del Vertex Shader.
+struct PixelInputType
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+
+
+// Pixel Shader principale, decide il colore finale del pixel
+float4 ColorPixelShader(PixelInputType input) : SV_TARGET
+{
+    return input.color;
+}

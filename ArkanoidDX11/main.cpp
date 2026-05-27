@@ -4,11 +4,13 @@
 
 #include "D3DClass.h"
 #include "InputClass.h"
+#include "ColorShaderClass.h"
 
 
 // Puntatore globale temporaneo alla classe DirectX
 D3DClass* g_D3D = nullptr;
 InputClass* g_Input = nullptr;
+ColorShaderClass* g_ColorShader = nullptr;
 
 
 // Funzione che Windows chiama ogni volta che succede qualcosa alla finestra
@@ -187,6 +189,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
     if (!g_D3D)
     {
+        delete g_Input;
+        g_Input = nullptr;
+
         return -1;
     }
 
@@ -197,6 +202,45 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         g_D3D->Shutdown();
         delete g_D3D;
         g_D3D = nullptr;
+
+        delete g_Input;
+        g_Input = nullptr;
+
+        return -1;
+    }
+
+    /*
+        Inizializzazione Color Shader
+    */
+
+    g_ColorShader = new ColorShaderClass();
+
+    if (!g_ColorShader)
+    {
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
+
+        delete g_Input;
+        g_Input = nullptr;
+
+        return -1;
+    }
+
+    if (!g_ColorShader->Initialize(g_D3D->GetDevice(), hwnd))
+    {
+        MessageBox(nullptr, L"Errore inizializzazione Color Shader!", L"Errore", MB_OK);
+
+        g_ColorShader->Shutdown();
+        delete g_ColorShader;
+        g_ColorShader = nullptr;
+
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
+
+        delete g_Input;
+        g_Input = nullptr;
 
         return -1;
     }
@@ -234,6 +278,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
             Render();
         }
     }
+
+
+
+    /*
+        Shutdown Color Shader
+    */
+
+    if (g_ColorShader)
+    {
+        g_ColorShader->Shutdown();
+        delete g_ColorShader;
+        g_ColorShader = nullptr;
+    }
+
 
 
     /*

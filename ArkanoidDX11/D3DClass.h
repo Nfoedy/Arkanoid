@@ -13,17 +13,20 @@ public:
     D3DClass();
     ~D3DClass();
 
-    // Inizializza DirectX 11: device, device context, swap chain, render target e viewport
-    bool Initialize(HWND hwnd, int width, int height);
+    
+    bool Initialize(HWND hwnd, int width, int height);  // Inizializza DirectX 11: device, device context, swap chain, render target e viewport
+    void Shutdown();    // Rilascia tutte le risorse DirectX create
 
-    // Rilascia tutte le risorse DirectX create
-    void Shutdown();
+ 
+    void BeginScene(float r, float g, float b, float a);       // Inizio frame: pulisce lo schermo con un colore
+    void EndScene();        // Fine frame: mostra il back buffer sullo schermo
 
-    // Inizio frame: pulisce lo schermo con un colore
-    void BeginScene(float r, float g, float b, float a);
+    // Ritorna il device DirectX, serve alle altre classi per creare risorse GPU
+    ID3D11Device* GetDevice();
 
-    // Fine frame: mostra il back buffer sullo schermo
-    void EndScene();
+    // Ritorna il device context, serve per mandare comandi alla GPU
+    ID3D11DeviceContext* GetDeviceContext();
+
 
 private:
     // Device = oggetto principale per creare risorse DirectX

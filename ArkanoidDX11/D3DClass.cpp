@@ -206,3 +206,15 @@ void D3DClass::EndScene()
     // 0 = nessun flag speciale
     m_swapChain->Present(1, 0);
 }
+
+
+ID3D11Device* D3DClass::GetDevice()
+{
+    return m_device;
+}
+
+
+ID3D11DeviceContext* D3DClass::GetDeviceContext()
+{
+    return m_deviceContext;
+}
