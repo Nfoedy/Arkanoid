@@ -47,6 +47,9 @@ public:
     // Fa rimbalzare la palla sul paddle.
     void BounceFromPaddle(float paddleTop);
 
+    // Inverte la direzione verticale della palla la uso quando la palla colpisce un brick.
+    void BounceY();
+
 private:
     bool InitializeBuffers(ID3D11Device* device);
     void ShutdownBuffers();

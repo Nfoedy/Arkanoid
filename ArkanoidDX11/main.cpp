@@ -191,6 +191,49 @@ void CheckPaddleBallCollision()
 }
 
 
+void CheckBallBrickCollision()
+{
+    if (!g_Ball)
+    {
+        return;
+    }
+
+    for (BrickClass* brick : g_Bricks)
+    {
+        if (!brick || !brick->IsActive())
+        {
+            continue;
+        }
+
+        bool isColliding = CheckAABBCollision(
+            g_Ball->GetLeft(),
+            g_Ball->GetRight(),
+            g_Ball->GetTop(),
+            g_Ball->GetBottom(),
+
+            brick->GetLeft(),
+            brick->GetRight(),
+            brick->GetTop(),
+            brick->GetBottom()
+        );
+
+        if (isColliding)
+        {
+            // Disattivo il brick.
+            // Nel Render() i brick inattivi non vengono disegnati.
+            brick->SetActive(false);
+
+            // Faccio rimbalzare la palla.
+            g_Ball->BounceY();
+
+            // Esco dopo il primo brick colpito.
+            // Così evitiamo di distruggere più brick nello stesso frame.
+            break;
+        }
+    }
+}
+
+
 bool InitializeBricks(ID3D11Device* device)
 {
     /*
@@ -569,8 +612,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 
     /*
-    Inizializzazione Bricks
-*/
+        Inizializzazione Bricks
+    */
 
     if (!InitializeBricks(g_D3D->GetDevice()))
     {
@@ -648,6 +691,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
             }
 
             CheckPaddleBallCollision();
+
+            CheckBallBrickCollision();
 
             Render();
         }

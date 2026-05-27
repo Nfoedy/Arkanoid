@@ -362,3 +362,9 @@ void BallClass::BounceFromPaddle(float paddleTop)
         m_velocityY *= -1.0f;
     }
 }
+
+
+void BallClass::BounceY()
+{
+    m_velocityY *= -1.0f;
+}
