@@ -306,14 +306,7 @@ void BallClass::CheckWallCollision()
         m_velocityY *= -1.0f;
     }
 
-    // Bordo basso.
-    // Per ora rimbalza anche sotto.
-    // Più avanti qui gestiremo la sconfitta.
-    if (m_y - halfSize < -1.0f)
-    {
-        m_y = -1.0f + halfSize;
-        m_velocityY *= -1.0f;
-    }
+
 }
 
 
@@ -367,4 +360,20 @@ void BallClass::BounceFromPaddle(float paddleTop)
 void BallClass::BounceY()
 {
     m_velocityY *= -1.0f;
+}
+
+
+void BallClass::Reset(float x, float y, float velocityX, float velocityY)
+{
+    m_x = x;
+    m_y = y;
+
+    m_velocityX = velocityX;
+    m_velocityY = velocityY;
+}
+
+
+bool BallClass::IsBelowBottom() const
+{
+    return GetBottom() < -1.0f;
 }

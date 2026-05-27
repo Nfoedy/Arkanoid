@@ -23,6 +23,16 @@ BallClass* g_Ball = nullptr;
 std::vector<BrickClass*> g_Bricks;
 
 
+enum class GameState
+{
+    Playing,
+    Win,
+    Lose
+};
+
+GameState g_GameState = GameState::Playing;
+
+
 // Funzione che Windows chiama ogni volta che succede qualcosa alla finestra
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -68,8 +78,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // Funzione chiamata ogni frame
 void Render()
 {
-    g_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
-
+    if (g_GameState == GameState::Playing)
+    {
+        // Blu: gioco in corso.
+        g_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
+    }
+    else if (g_GameState == GameState::Win)
+    {
+        // Verde: vittoria.
+        g_D3D->BeginScene(0.1f, 0.35f, 0.1f, 1.0f);
+    }
+    else
+    {
+        // Rosso: sconfitta.
+        g_D3D->BeginScene(0.35f, 0.1f, 0.1f, 1.0f);
+    }
 
     // Disegno tutti i brick attivi.
     for (BrickClass* brick : g_Bricks)
@@ -323,6 +346,73 @@ void ShutdownBricks()
 }
 
 
+
+bool AreAllBricksDestroyed()
+{
+    for (BrickClass* brick : g_Bricks)
+    {
+        if (brick && brick->IsActive())
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+void ResetGame()
+{
+    g_GameState = GameState::Playing;
+
+    if (g_Paddle)
+    {
+        g_Paddle->Reset(
+            0.0f,   // x
+            -0.8f   // y
+        );
+    }
+
+    if (g_Ball)
+    {
+        g_Ball->Reset(
+            0.0f,    // x
+            -0.2f,   // y
+            0.01f,   // velocityX
+            0.012f   // velocityY
+        );
+    }
+
+    ShutdownBricks();
+    InitializeBricks(g_D3D->GetDevice());
+}
+
+
+void CheckGameState()
+{
+    if (!g_Ball)
+    {
+        return;
+    }
+
+    // Sconfitta: la palla è uscita sotto lo schermo.
+    if (g_Ball->IsBelowBottom())
+    {
+        g_GameState = GameState::Lose;
+        return;
+    }
+
+    // Vittoria: tutti i brick sono stati distrutti.
+    if (AreAllBricksDestroyed())
+    {
+        g_GameState = GameState::Win;
+        return;
+    }
+}
+
+
+
+// ================================================
 
 // è il main(), ma per programmi Win32 con finestra
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, int nCmdShow)
@@ -672,27 +762,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
                 PostQuitMessage(0);
             }
 
-            if (g_Input && g_Paddle)
+            // Restart con R se siamo in win/lose.
+            if (g_Input && g_Input->IsKeyDown('R') && g_GameState != GameState::Playing)
             {
-                if (g_Input->IsKeyDown(VK_LEFT) || g_Input->IsKeyDown('A'))
-                {
-                    g_Paddle->MoveLeft();
-                }
-
-                if (g_Input->IsKeyDown(VK_RIGHT) || g_Input->IsKeyDown('D'))
-                {
-                    g_Paddle->MoveRight();
-                }
+                ResetGame();
             }
 
-            if (g_Ball)
+            if (g_GameState == GameState::Playing)
             {
-                g_Ball->Update();
+                if (g_Input && g_Paddle)
+                {
+                    if (g_Input->IsKeyDown(VK_LEFT) || g_Input->IsKeyDown('A'))
+                    {
+                        g_Paddle->MoveLeft();
+                    }
+
+                    if (g_Input->IsKeyDown(VK_RIGHT) || g_Input->IsKeyDown('D'))
+                    {
+                        g_Paddle->MoveRight();
+                    }
+                }
+
+                if (g_Ball)
+                {
+                    g_Ball->Update();
+                }
+
+                CheckPaddleBallCollision();
+
+                CheckBallBrickCollision();
+
+                CheckGameState();
             }
-
-            CheckPaddleBallCollision();
-
-            CheckBallBrickCollision();
 
             Render();
         }

@@ -45,6 +45,9 @@ public:
     float GetTop() const;
     float GetBottom() const;
 
+    // Riporta il paddle a una posizione iniziale.
+    void Reset(float x, float y);
+
 private:
     bool InitializeBuffers(ID3D11Device* device);
     void ShutdownBuffers();

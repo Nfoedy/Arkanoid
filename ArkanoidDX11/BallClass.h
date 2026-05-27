@@ -50,6 +50,12 @@ public:
     // Inverte la direzione verticale della palla la uso quando la palla colpisce un brick.
     void BounceY();
 
+    // Reset della palla a una posizione e velocità iniziale.
+    void Reset(float x, float y, float velocityX, float velocityY);
+
+    // Controlla se la palla è uscita dal basso dello schermo.
+    bool IsBelowBottom() const;
+
 private:
     bool InitializeBuffers(ID3D11Device* device);
     void ShutdownBuffers();

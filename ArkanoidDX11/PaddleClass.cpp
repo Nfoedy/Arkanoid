@@ -352,3 +352,12 @@ float PaddleClass::GetBottom() const
 {
     return m_y - (m_height * 0.5f);
 }
+
+
+void PaddleClass::Reset(float x, float y)
+{
+    m_x = x;
+    m_y = y;
+
+    ClampToScreen();
+}
