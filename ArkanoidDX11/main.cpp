@@ -1,54 +1,76 @@
-#define WIN32_LEAD_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 
 #include <windows.h> // Libreria per le API Win32
+
+#include "D3DClass.h"
+
+
+// Puntatore globale temporaneo alla classe DirectX
+D3DClass* g_D3D = nullptr;
+
 
 
 // Funzione che Windows chiama ogni volta che succede qualcosa alla finestra
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	// hwnd = handle della finestra che ha ricevuto il messaggio
-	// msg = tipo di messaggio ricevuto da Windows
-	// wParam = parametro aggiuntivo al messaggio 
-	// lParma = altro parametro aggiuntivo al messaggio
+    // hwnd = handle della finestra che ha ricevuto il messaggio
+    // msg = tipo di messaggio ricevuto da Windows
+    // wParam = parametro aggiuntivo al messaggio 
+    // lParma = altro parametro aggiuntivo al messaggio
 
-	switch (msg)
-	{
+    switch (msg)
+    {
 
-		// Alla distruzione della finestra
-	case WM_DESTROY:
-		PostQuitMessage(0);     // Dice di uscre dal message loop
-		return 0;
+        // Alla distruzione della finestra
+    case WM_DESTROY:
+        PostQuitMessage(0);     // Dice di uscre dal message loop
+        return 0;
 
-		// Quando viene premuto un tasto della tastiera
-	case WM_KEYDOWN:
-		// Se viene premuto ESC
-		if (wParam == VK_ESCAPE)
-		{
-			// Chiudo il programma
-			PostQuitMessage(0);
-		}
-		return 0;
-	}
+        // Quando viene premuto un tasto della tastiera
+    case WM_KEYDOWN:
+        // Se viene premuto ESC
+        if (wParam == VK_ESCAPE)
+        {
+            // Chiudo il programma
+            PostQuitMessage(0);
+        }
+        return 0;
+    }
 
-	// Tutti i messaggi che non gestisco vengono passati alla gestione di default di Windows
-	return DefWindowProc(hwnd, msg, wParam, lParam);
+    // Tutti i messaggi che non gestisco vengono passati alla gestione di default di Windows
+    return DefWindowProc(hwnd, msg, wParam, lParam);
 }
+
+
+
+// Funzione chiamata ogni frame
+void Render()
+{
+    g_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
+
+    // In futuro qui disegneremo:
+    // paddle, ball, bricks, ecc.
+
+    g_D3D->EndScene();
+}
+
+
 
 
 // è il main(), ma per programmi Win32 con finestra
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, int nCmdShow)
 {
-	// hInstance = Handle dell'istanza corrente del sistema
-	// hPrevInstance = Non usato nelle app moderne
-	// pCmdLine = Argomenti da command line
-	// nCmdShow = Come mostrare la finestra
+    // hInstance = Handle dell'istanza corrente del sistema
+    // hPrevInstance = Non usato nelle app moderne
+    // pCmdLine = Argomenti da command line
+    // nCmdShow = Come mostrare la finestra
 
-	// dim
-	const int WIDTH = 800;
-	const int HEIGHT = 600;
+    // dim
+    const int WIDTH = 800;
+    const int HEIGHT = 600;
 
-	// Titilo della finestra
-	const wchar_t* CLASS_NAME = L"ArkanoidDX11WindowClass";
+    // Titilo della finestra
+    const wchar_t* CLASS_NAME = L"ArkanoidDX11WindowClass";
 
 
     /*
@@ -134,6 +156,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 
     /*
+        Inizializzazione DirectX
+    */
+
+    g_D3D = new D3DClass();
+
+    if (!g_D3D)
+    {
+        return -1;
+    }
+
+    if (!g_D3D->Initialize(hwnd, WIDTH, HEIGHT))
+    {
+        MessageBox(nullptr, L"Errore inizializzazione DirectX!", L"Errore", MB_OK);
+
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
+
+        return -1;
+    }
+
+
+    /*
         5. Message loop
     */
 
@@ -143,7 +188,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
     // Il programma continua finché non riceve WM_QUIT.
     while (msg.message != WM_QUIT)
     {
-       
+
         // PM_REMOVE significa: se trova un messaggio, rimuovilo dalla coda.
         if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
@@ -153,9 +198,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
             // Manda il messaggio alla WndProc.
             DispatchMessage(&msg);
         }
+        else
+        {
+            Render();
+        }
+    }
 
 
+    /*
+        Shutdown DirectX
+    */
 
+    if (g_D3D)
+    {
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
     }
 
 
