@@ -5,12 +5,14 @@
 #include "D3DClass.h"
 #include "InputClass.h"
 #include "ColorShaderClass.h"
+#include "QuadClass.h"
 
 
 // Puntatore globale temporaneo alla classe DirectX
 D3DClass* g_D3D = nullptr;
 InputClass* g_Input = nullptr;
 ColorShaderClass* g_ColorShader = nullptr;
+QuadClass* g_Quad = nullptr;
 
 
 // Funzione che Windows chiama ogni volta che succede qualcosa alla finestra
@@ -59,8 +61,18 @@ void Render()
 {
     g_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
 
-    // In futuro qui disegneremo:
-    // paddle, ball, bricks, ecc.
+    // Mando vertex buffer e index buffer del quad alla pipeline
+    g_Quad->Render(g_D3D->GetDeviceContext());
+
+    // Attivo input layout, vertex shader e pixel shader
+    g_ColorShader->RenderShader(g_D3D->GetDeviceContext());
+
+    // Disegno il rettangolo usando gli indici
+    g_D3D->GetDeviceContext()->DrawIndexed(
+        g_Quad->GetIndexCount(),
+        0,
+        0
+    );
 
     g_D3D->EndScene();
 }
@@ -247,6 +259,51 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 
     /*
+        Inizializzazione Quad
+    */
+
+    g_Quad = new QuadClass();
+
+    if (!g_Quad)
+    {
+        g_ColorShader->Shutdown();
+        delete g_ColorShader;
+        g_ColorShader = nullptr;
+
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
+
+        delete g_Input;
+        g_Input = nullptr;
+
+        return -1;
+    }
+
+    if (!g_Quad->Initialize(g_D3D->GetDevice()))
+    {
+        MessageBox(nullptr, L"Errore inizializzazione Quad!", L"Errore", MB_OK);
+
+        g_Quad->Shutdown();
+        delete g_Quad;
+        g_Quad = nullptr;
+
+        g_ColorShader->Shutdown();
+        delete g_ColorShader;
+        g_ColorShader = nullptr;
+
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
+
+        delete g_Input;
+        g_Input = nullptr;
+
+        return -1;
+    }
+
+
+    /*
         5. Message loop
     */
 
@@ -277,6 +334,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
             Render();
         }
+    }
+
+    /*
+        Shutdown Quad
+    */
+
+    if (g_Quad)
+    {
+        g_Quad->Shutdown();
+        delete g_Quad;
+        g_Quad = nullptr;
     }
 
 

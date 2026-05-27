@@ -143,11 +143,13 @@
     <ClCompile Include="D3DClass.cpp" />
     <ClCompile Include="InputClass.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="QuadClass..cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ColorShaderClass.h" />
     <ClInclude Include="D3DClass.h" />
     <ClInclude Include="InputClass.h" />
+    <ClInclude Include="QuadClass.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="color.ps" />
