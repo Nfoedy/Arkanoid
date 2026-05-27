@@ -6,6 +6,7 @@
 #include "InputClass.h"
 #include "ColorShaderClass.h"
 #include "QuadClass.h"
+#include "PaddleClass.h"
 
 
 // Puntatore globale temporaneo alla classe DirectX
@@ -13,6 +14,7 @@ D3DClass* g_D3D = nullptr;
 InputClass* g_Input = nullptr;
 ColorShaderClass* g_ColorShader = nullptr;
 QuadClass* g_Quad = nullptr;
+PaddleClass* g_Paddle = nullptr;
 
 
 // Funzione che Windows chiama ogni volta che succede qualcosa alla finestra
@@ -61,15 +63,15 @@ void Render()
 {
     g_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
 
-    // Mando vertex buffer e index buffer del quad alla pipeline
-    g_Quad->Render(g_D3D->GetDeviceContext());
+    // Mando il paddle alla pipeline.
+    g_Paddle->Render(g_D3D->GetDeviceContext());
 
-    // Attivo input layout, vertex shader e pixel shader
+    // Attivo input layout, vertex shader e pixel shader.
     g_ColorShader->RenderShader(g_D3D->GetDeviceContext());
 
-    // Disegno il rettangolo usando gli indici
+    // Disegno il paddle.
     g_D3D->GetDeviceContext()->DrawIndexed(
-        g_Quad->GetIndexCount(),
+        g_Paddle->GetIndexCount(),
         0,
         0
     );
@@ -259,6 +261,57 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 
     /*
+        Inizializzazione Paddle
+    */
+
+    g_Paddle = new PaddleClass();
+
+    if (!g_Paddle)
+    {
+        g_ColorShader->Shutdown();
+        delete g_ColorShader;
+        g_ColorShader = nullptr;
+
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
+
+        delete g_Input;
+        g_Input = nullptr;
+
+        return -1;
+    }
+
+    if (!g_Paddle->Initialize(
+        g_D3D->GetDevice(),
+        0.0f,    // x: centro dello schermo
+        -0.8f,   // y: in basso
+        0.35f,   // width
+        0.08f    // height
+    ))
+    {
+        MessageBox(nullptr, L"Errore inizializzazione Paddle!", L"Errore", MB_OK);
+
+        g_Paddle->Shutdown();
+        delete g_Paddle;
+        g_Paddle = nullptr;
+
+        g_ColorShader->Shutdown();
+        delete g_ColorShader;
+        g_ColorShader = nullptr;
+
+        g_D3D->Shutdown();
+        delete g_D3D;
+        g_D3D = nullptr;
+
+        delete g_Input;
+        g_Input = nullptr;
+
+        return -1;
+    }
+
+
+    /*
         Inizializzazione Quad
     */
 
@@ -325,11 +378,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         }
         else
         {
-            // Ora ESC viene controllato usando InputClass.
-            // WndProc aggiorna lo stato dei tasti, mentre il game loop decide cosa fare
             if (g_Input && g_Input->IsKeyDown(VK_ESCAPE))
             {
                 PostQuitMessage(0);
+            }
+
+            if (g_Input && g_Paddle)
+            {
+                if (g_Input->IsKeyDown(VK_LEFT) || g_Input->IsKeyDown('A'))
+                {
+                    g_Paddle->MoveLeft();
+                }
+
+                if (g_Input->IsKeyDown(VK_RIGHT) || g_Input->IsKeyDown('D'))
+                {
+                    g_Paddle->MoveRight();
+                }
             }
 
             Render();
@@ -345,6 +409,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         g_Quad->Shutdown();
         delete g_Quad;
         g_Quad = nullptr;
+    }
+
+    /*
+        Shutdown Paddle
+    */
+
+    if (g_Paddle)
+    {
+        g_Paddle->Shutdown();
+        delete g_Paddle;
+        g_Paddle = nullptr;
     }
 
 
