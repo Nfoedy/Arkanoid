@@ -1,22 +1,26 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h> // Libreria per le API Win32
+#include <vector>
 
 #include "D3DClass.h"
 #include "InputClass.h"
 #include "ColorShaderClass.h"
-#include "QuadClass.h"
 #include "PaddleClass.h"
 #include "BallClass.h"
+#include "BrickClass.h"
+
 
 
 // Puntatore globale temporaneo alla classe DirectX
 D3DClass* g_D3D = nullptr;
 InputClass* g_Input = nullptr;
 ColorShaderClass* g_ColorShader = nullptr;
-QuadClass* g_Quad = nullptr;
 PaddleClass* g_Paddle = nullptr;
 BallClass* g_Ball = nullptr;
+
+// Lista dei brick del livello.
+std::vector<BrickClass*> g_Bricks;
 
 
 // Funzione che Windows chiama ogni volta che succede qualcosa alla finestra
@@ -25,7 +29,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     // hwnd = handle della finestra che ha ricevuto il messaggio
     // msg = tipo di messaggio ricevuto da Windows
     // wParam = parametro aggiuntivo al messaggio 
-    // lParma = altro parametro aggiuntivo al messaggio
+    // lParam = altro parametro aggiuntivo al messaggio
 
     switch (msg)
     {
@@ -61,9 +65,29 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 
 // Funzione chiamata ogni frame
+// Funzione chiamata ogni frame
 void Render()
 {
     g_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
+
+
+    // Disegno tutti i brick attivi.
+    for (BrickClass* brick : g_Bricks)
+    {
+        if (brick && brick->IsActive())
+        {
+            brick->Render(g_D3D->GetDeviceContext());
+
+            g_ColorShader->RenderShader(g_D3D->GetDeviceContext());
+
+            g_D3D->GetDeviceContext()->DrawIndexed(
+                brick->GetIndexCount(),
+                0,
+                0
+            );
+        }
+    }
+
 
     // Disegno il paddle.
     g_Paddle->Render(g_D3D->GetDeviceContext());
@@ -87,6 +111,7 @@ void Render()
         0,
         0
     );
+
 
     g_D3D->EndScene();
 }
@@ -163,6 +188,95 @@ void CheckPaddleBallCollision()
     {
         g_Ball->BounceFromPaddle(g_Paddle->GetTop());
     }
+}
+
+
+bool InitializeBricks(ID3D11Device* device)
+{
+    /*
+        Creiamo una griglia semplice di brick.
+
+        Coordinate clip space:
+        x va da -1 a +1
+        y va da -1 a +1
+
+        I brick stanno nella parte alta dello schermo.
+    */
+
+    const int rows = 4;
+    const int columns = 8;
+
+    const float brickWidth = 0.20f;
+    const float brickHeight = 0.08f;
+
+    const float spacingX = 0.03f;
+    const float spacingY = 0.03f;
+
+    const float startX = -0.805f;
+    const float startY = 0.75f;
+
+    for (int row = 0; row < rows; row++)
+    {
+        for (int col = 0; col < columns; col++)
+        {
+            float x = startX + col * (brickWidth + spacingX);
+            float y = startY - row * (brickHeight + spacingY);
+
+            /*
+                Colore diverso in base alla riga.
+                Per ora è solo estetico.
+            */
+
+            float r = 1.0f;
+            float g = 0.3f + row * 0.15f;
+            float b = 0.2f + col * 0.05f;
+
+            BrickClass* brick = new BrickClass();
+
+            if (!brick)
+            {
+                return false;
+            }
+
+            if (!brick->Initialize(
+                device,
+                x,
+                y,
+                brickWidth,
+                brickHeight,
+                r,
+                g,
+                b
+            ))
+            {
+                brick->Shutdown();
+                delete brick;
+                brick = nullptr;
+
+                return false;
+            }
+
+            g_Bricks.push_back(brick);
+        }
+    }
+
+    return true;
+}
+
+
+
+void ShutdownBricks()
+{
+    for (BrickClass* brick : g_Bricks)
+    {
+        if (brick)
+        {
+            brick->Shutdown();
+            delete brick;
+        }
+    }
+
+    g_Bricks.clear();
 }
 
 
@@ -455,13 +569,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 
     /*
-        Inizializzazione Quad
-    */
+    Inizializzazione Bricks
+*/
 
-    g_Quad = new QuadClass();
-
-    if (!g_Quad)
+    if (!InitializeBricks(g_D3D->GetDevice()))
     {
+        MessageBox(nullptr, L"Errore inizializzazione Bricks!", L"Errore", MB_OK);
+
+        ShutdownBricks();
+
+        g_Ball->Shutdown();
+        delete g_Ball;
+        g_Ball = nullptr;
+
+        g_Paddle->Shutdown();
+        delete g_Paddle;
+        g_Paddle = nullptr;
+
         g_ColorShader->Shutdown();
         delete g_ColorShader;
         g_ColorShader = nullptr;
@@ -476,27 +600,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         return -1;
     }
 
-    if (!g_Quad->Initialize(g_D3D->GetDevice()))
-    {
-        MessageBox(nullptr, L"Errore inizializzazione Quad!", L"Errore", MB_OK);
-
-        g_Quad->Shutdown();
-        delete g_Quad;
-        g_Quad = nullptr;
-
-        g_ColorShader->Shutdown();
-        delete g_ColorShader;
-        g_ColorShader = nullptr;
-
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-
-        delete g_Input;
-        g_Input = nullptr;
-
-        return -1;
-    }
 
 
     /*
@@ -550,16 +653,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         }
     }
 
+
     /*
-        Shutdown Quad
+        Shutdown Bricks
     */
 
-    if (g_Quad)
-    {
-        g_Quad->Shutdown();
-        delete g_Quad;
-        g_Quad = nullptr;
-    }
+    ShutdownBricks();
+
+
 
     /*
         Shutdown Ball
