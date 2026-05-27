@@ -38,6 +38,13 @@ public:
     // Ritorna il numero di indici da disegnare
     int GetIndexCount() const;
 
+    // Ritorna i lati del paddle.
+    // Servono per controllare le collisioni.
+    float GetLeft() const;
+    float GetRight() const;
+    float GetTop() const;
+    float GetBottom() const;
+
 private:
     bool InitializeBuffers(ID3D11Device* device);
     void ShutdownBuffers();

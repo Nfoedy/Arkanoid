@@ -315,3 +315,50 @@ void BallClass::CheckWallCollision()
         m_velocityY *= -1.0f;
     }
 }
+
+
+
+float BallClass::GetLeft() const
+{
+    return m_x - (m_size * 0.5f);
+}
+
+
+float BallClass::GetRight() const
+{
+    return m_x + (m_size * 0.5f);
+}
+
+
+float BallClass::GetTop() const
+{
+    return m_y + (m_size * 0.5f);
+}
+
+
+float BallClass::GetBottom() const
+{
+    return m_y - (m_size * 0.5f);
+}
+
+
+bool BallClass::IsMovingDown() const
+{
+    return m_velocityY < 0.0f;
+}
+
+
+void BallClass::BounceFromPaddle(float paddleTop)
+{
+    // Spostiamo la palla appena sopra il paddle.
+    // Questo evita che rimanga incastrata dentro il paddle
+    // e continui a invertire direzione ogni frame.
+    m_y = paddleTop + (m_size * 0.5f);
+
+    // Se la palla stava andando verso il basso,
+    // invertiamo la direzione verticale.
+    if (m_velocityY < 0.0f)
+    {
+        m_velocityY *= -1.0f;
+    }
+}

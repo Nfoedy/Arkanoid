@@ -92,6 +92,80 @@ void Render()
 }
 
 
+// Funzione per collisioni
+bool CheckAABBCollision(
+    float leftA,
+    float rightA,
+    float topA,
+    float bottomA,
+    float leftB,
+    float rightB,
+    float topB,
+    float bottomB
+)
+{
+    // Se un oggetto è completamente a sinistra dell'altro, non collidono.
+    if (rightA < leftB)
+    {
+        return false;
+    }
+
+    // Se un oggetto è completamente a destra dell'altro, non collidono.
+    if (leftA > rightB)
+    {
+        return false;
+    }
+
+    // Se un oggetto è completamente sotto l'altro, non collidono.
+    if (topA < bottomB)
+    {
+        return false;
+    }
+
+    // Se un oggetto è completamente sopra l'altro, non collidono.
+    if (bottomA > topB)
+    {
+        return false;
+    }
+
+    // Se nessuna delle condizioni sopra è vera,
+    // allora i due rettangoli si stanno sovrapponendo.
+    return true;
+}
+
+
+
+void CheckPaddleBallCollision()
+{
+    if (!g_Paddle || !g_Ball)
+    {
+        return;
+    }
+
+    bool isColliding = CheckAABBCollision(
+        g_Paddle->GetLeft(),
+        g_Paddle->GetRight(),
+        g_Paddle->GetTop(),
+        g_Paddle->GetBottom(),
+
+        g_Ball->GetLeft(),
+        g_Ball->GetRight(),
+        g_Ball->GetTop(),
+        g_Ball->GetBottom()
+    );
+
+    // Facciamo rimbalzare la palla solo se:
+    // 1. sta collidendo con il paddle
+    // 2. sta andando verso il basso
+    //
+    // Questo evita rimbalzi strani quando la palla è già sopra il paddle.
+    if (isColliding && g_Ball->IsMovingDown())
+    {
+        g_Ball->BounceFromPaddle(g_Paddle->GetTop());
+    }
+}
+
+
 
 // è il main(), ma per programmi Win32 con finestra
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, int nCmdShow)
@@ -469,6 +543,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
             {
                 g_Ball->Update();
             }
+
+            CheckPaddleBallCollision();
 
             Render();
         }

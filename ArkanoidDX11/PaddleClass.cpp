@@ -328,3 +328,27 @@ void PaddleClass::ClampToScreen()
         m_x = 1.0f - halfWidth;
     }
 }
+
+
+float PaddleClass::GetLeft() const
+{
+    return m_x - (m_width * 0.5f);
+}
+
+
+float PaddleClass::GetRight() const
+{
+    return m_x + (m_width * 0.5f);
+}
+
+
+float PaddleClass::GetTop() const
+{
+    return m_y + (m_height * 0.5f);
+}
+
+
+float PaddleClass::GetBottom() const
+{
+    return m_y - (m_height * 0.5f);
+}

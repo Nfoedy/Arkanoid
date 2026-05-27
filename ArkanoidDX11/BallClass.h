@@ -34,6 +34,19 @@ public:
 
     int GetIndexCount() const;
 
+    // Ritorna i lati della palla.
+    // Per ora la palla è un quadratino.
+    float GetLeft() const;
+    float GetRight() const;
+    float GetTop() const;
+    float GetBottom() const;
+
+    // Controlla se la palla sta andando verso il basso.
+    bool IsMovingDown() const;
+
+    // Fa rimbalzare la palla sul paddle.
+    void BounceFromPaddle(float paddleTop);
+
 private:
     bool InitializeBuffers(ID3D11Device* device);
     void ShutdownBuffers();
