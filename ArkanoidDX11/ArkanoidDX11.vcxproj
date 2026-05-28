@@ -148,6 +148,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PaddleClass.cpp" />
     <ClCompile Include="QuadClass..cpp" />
+    <ClCompile Include="RectObject2D.cpp" />
     <ClCompile Include="TimerClass.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -159,6 +160,7 @@
     <ClInclude Include="InputClass.h" />
     <ClInclude Include="PaddleClass.h" />
     <ClInclude Include="QuadClass.h" />
+    <ClInclude Include="RectObject2D.h" />
     <ClInclude Include="TimerClass.h" />
   </ItemGroup>
   <ItemGroup>

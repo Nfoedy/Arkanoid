@@ -1,19 +1,8 @@
 #include "BallClass.h"
 
-#include <cstring>
-
 
 BallClass::BallClass()
 {
-    m_vertexBuffer = nullptr;
-    m_indexBuffer = nullptr;
-
-    m_vertexCount = 0;
-    m_indexCount = 0;
-
-    m_x = 0.0f;
-    m_y = 0.0f;
-
     m_size = 0.0f;
 
     m_velocityX = 0.6f;
@@ -33,25 +22,36 @@ bool BallClass::Initialize(
     float size
 )
 {
-    m_x = x;
-    m_y = y;
     m_size = size;
 
-    return InitializeBuffers(device);
+    return m_Rect.Initialize(
+        device,
+        x,
+        y,
+        size,
+        size,
+        1.0f,
+        0.9f,
+        0.2f
+    );
 }
 
 
 void BallClass::Shutdown()
 {
-    ShutdownBuffers();
+    m_Rect.Shutdown();
 }
 
 
 void BallClass::Update(float deltaTime)
 {
-    // Aggiorno la posizione della palla usando il delta time.
-    m_x += m_velocityX * deltaTime;
-    m_y += m_velocityY * deltaTime;
+    float x = m_Rect.GetX();
+    float y = m_Rect.GetY();
+
+    x += m_velocityX * deltaTime;
+    y += m_velocityY * deltaTime;
+
+    m_Rect.SetPosition(x, y);
 
     CheckWallCollision();
 }
@@ -59,278 +59,52 @@ void BallClass::Update(float deltaTime)
 
 void BallClass::Render(ID3D11DeviceContext* deviceContext)
 {
-    UpdateBuffers(deviceContext);
-    RenderBuffers(deviceContext);
+    m_Rect.Render(deviceContext);
 }
 
 
 int BallClass::GetIndexCount() const
 {
-    return m_indexCount;
+    return m_Rect.GetIndexCount();
 }
 
 
-bool BallClass::InitializeBuffers(ID3D11Device* device)
+void BallClass::Reset(float x, float y, float velocityX, float velocityY)
 {
-    m_vertexCount = 4;
-    m_indexCount = 6;
+    m_Rect.SetPosition(x, y);
 
-    VertexType* vertices = new VertexType[m_vertexCount];
-    unsigned long* indices = new unsigned long[m_indexCount];
-
-    if (!vertices || !indices)
-    {
-        return false;
-    }
-
-    // Inizializzo i vertici a zero.
-    // Verranno aggiornati ogni frame con UpdateBuffers().
-    for (int i = 0; i < m_vertexCount; i++)
-    {
-        vertices[i].position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-        vertices[i].color = DirectX::XMFLOAT4(1.0f, 0.9f, 0.2f, 1.0f);
-    }
-
-    /*
-        Rettangolo formato da due triangoli:
-
-        0 -------- 1
-        |        / |
-        |      /   |
-        |    /     |
-        3 -------- 2
-    */
-
-    indices[0] = 0;
-    indices[1] = 1;
-    indices[2] = 2;
-
-    indices[3] = 0;
-    indices[4] = 2;
-    indices[5] = 3;
-
-
-    /*
-        Vertex buffer dinamico:
-        la palla si muove, quindi i vertici cambiano ogni frame.
-    */
-
-    D3D11_BUFFER_DESC vertexBufferDesc = {};
-
-    vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    vertexBufferDesc.ByteWidth = sizeof(VertexType) * m_vertexCount;
-    vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    vertexBufferDesc.MiscFlags = 0;
-    vertexBufferDesc.StructureByteStride = 0;
-
-    D3D11_SUBRESOURCE_DATA vertexData = {};
-
-    vertexData.pSysMem = vertices;
-    vertexData.SysMemPitch = 0;
-    vertexData.SysMemSlicePitch = 0;
-
-    HRESULT result = device->CreateBuffer(
-        &vertexBufferDesc,
-        &vertexData,
-        &m_vertexBuffer
-    );
-
-    if (FAILED(result))
-    {
-        delete[] vertices;
-        delete[] indices;
-
-        return false;
-    }
-
-
-    /*
-        Index buffer statico:
-        gli indici non cambiano mai.
-    */
-
-    D3D11_BUFFER_DESC indexBufferDesc = {};
-
-    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    indexBufferDesc.ByteWidth = sizeof(unsigned long) * m_indexCount;
-    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    indexBufferDesc.CPUAccessFlags = 0;
-    indexBufferDesc.MiscFlags = 0;
-    indexBufferDesc.StructureByteStride = 0;
-
-    D3D11_SUBRESOURCE_DATA indexData = {};
-
-    indexData.pSysMem = indices;
-    indexData.SysMemPitch = 0;
-    indexData.SysMemSlicePitch = 0;
-
-    result = device->CreateBuffer(
-        &indexBufferDesc,
-        &indexData,
-        &m_indexBuffer
-    );
-
-    delete[] vertices;
-    vertices = nullptr;
-
-    delete[] indices;
-    indices = nullptr;
-
-    if (FAILED(result))
-    {
-        return false;
-    }
-
-    return true;
+    m_velocityX = velocityX;
+    m_velocityY = velocityY;
 }
 
 
-void BallClass::ShutdownBuffers()
+bool BallClass::IsBelowBottom() const
 {
-    if (m_indexBuffer)
-    {
-        m_indexBuffer->Release();
-        m_indexBuffer = nullptr;
-    }
-
-    if (m_vertexBuffer)
-    {
-        m_vertexBuffer->Release();
-        m_vertexBuffer = nullptr;
-    }
+    return GetBottom() < -1.0f;
 }
-
-
-bool BallClass::UpdateBuffers(ID3D11DeviceContext* deviceContext)
-{
-    float halfSize = m_size * 0.5f;
-
-    float left = m_x - halfSize;
-    float right = m_x + halfSize;
-    float top = m_y + halfSize;
-    float bottom = m_y - halfSize;
-
-    VertexType vertices[4];
-
-    // Alto-sinistra
-    vertices[0].position = DirectX::XMFLOAT3(left, top, 0.0f);
-    vertices[0].color = DirectX::XMFLOAT4(1.0f, 0.9f, 0.2f, 1.0f);
-
-    // Alto-destra
-    vertices[1].position = DirectX::XMFLOAT3(right, top, 0.0f);
-    vertices[1].color = DirectX::XMFLOAT4(1.0f, 0.9f, 0.2f, 1.0f);
-
-    // Basso-destra
-    vertices[2].position = DirectX::XMFLOAT3(right, bottom, 0.0f);
-    vertices[2].color = DirectX::XMFLOAT4(1.0f, 0.9f, 0.2f, 1.0f);
-
-    // Basso-sinistra
-    vertices[3].position = DirectX::XMFLOAT3(left, bottom, 0.0f);
-    vertices[3].color = DirectX::XMFLOAT4(1.0f, 0.9f, 0.2f, 1.0f);
-
-
-    D3D11_MAPPED_SUBRESOURCE mappedResource = {};
-
-    HRESULT result = deviceContext->Map(
-        m_vertexBuffer,
-        0,
-        D3D11_MAP_WRITE_DISCARD,
-        0,
-        &mappedResource
-    );
-
-    if (FAILED(result))
-    {
-        return false;
-    }
-
-    VertexType* verticesPtr = static_cast<VertexType*>(mappedResource.pData);
-
-    memcpy(verticesPtr, vertices, sizeof(VertexType) * m_vertexCount);
-
-    deviceContext->Unmap(m_vertexBuffer, 0);
-
-    return true;
-}
-
-
-void BallClass::RenderBuffers(ID3D11DeviceContext* deviceContext)
-{
-    unsigned int stride = sizeof(VertexType);
-    unsigned int offset = 0;
-
-    deviceContext->IASetVertexBuffers(
-        0,
-        1,
-        &m_vertexBuffer,
-        &stride,
-        &offset
-    );
-
-    deviceContext->IASetIndexBuffer(
-        m_indexBuffer,
-        DXGI_FORMAT_R32_UINT,
-        0
-    );
-
-    deviceContext->IASetPrimitiveTopology(
-        D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
-    );
-}
-
-
-void BallClass::CheckWallCollision()
-{
-    float halfSize = m_size * 0.5f;
-
-    // Bordo sinistro.
-    if (m_x - halfSize < -1.0f)
-    {
-        m_x = -1.0f + halfSize;
-        m_velocityX *= -1.0f;
-    }
-
-    // Bordo destro.
-    if (m_x + halfSize > 1.0f)
-    {
-        m_x = 1.0f - halfSize;
-        m_velocityX *= -1.0f;
-    }
-
-    // Bordo alto.
-    if (m_y + halfSize > 1.0f)
-    {
-        m_y = 1.0f - halfSize;
-        m_velocityY *= -1.0f;
-    }
-
-
-}
-
 
 
 float BallClass::GetLeft() const
 {
-    return m_x - (m_size * 0.5f);
+    return m_Rect.GetLeft();
 }
 
 
 float BallClass::GetRight() const
 {
-    return m_x + (m_size * 0.5f);
+    return m_Rect.GetRight();
 }
 
 
 float BallClass::GetTop() const
 {
-    return m_y + (m_size * 0.5f);
+    return m_Rect.GetTop();
 }
 
 
 float BallClass::GetBottom() const
 {
-    return m_y - (m_size * 0.5f);
+    return m_Rect.GetBottom();
 }
 
 
@@ -347,16 +121,19 @@ void BallClass::BounceFromPaddle(float paddleTop, float hitFactor)
         Questo evita che rimanga incastrata dentro il paddle.
     */
 
-    m_y = paddleTop + (m_size * 0.5f);
+    m_Rect.SetPosition(
+        m_Rect.GetX(),
+        paddleTop + (m_size * 0.5f)
+    );
 
 
     /*
         Limitiamo hitFactor tra -1 e +1.
 
         hitFactor:
-        -1 = colpito lato sinistro del paddle
-         0 = colpito centro del paddle
-        +1 = colpito lato destro del paddle
+        -1 = lato sinistro del paddle
+         0 = centro del paddle
+        +1 = lato destro del paddle
     */
 
     if (hitFactor < -1.0f)
@@ -371,8 +148,8 @@ void BallClass::BounceFromPaddle(float paddleTop, float hitFactor)
 
 
     /*
-        Dopo aver colpito il paddle, la palla deve andare verso l'alto.
-        Quindi rendiamo la velocità Y positiva.
+        Dopo aver colpito il paddle,
+        la palla deve andare verso l'alto.
     */
 
     if (m_velocityY < 0.0f)
@@ -382,18 +159,11 @@ void BallClass::BounceFromPaddle(float paddleTop, float hitFactor)
 
 
     /*
-        Ora che usiamo delta time, la velocità è in unità al secondo.
-        Quindi servono valori coerenti con m_velocityX = 0.6f e m_velocityY = 0.72f.
+        Velocità orizzontale basata sul punto di impatto.
     */
 
     const float maxHorizontalSpeed = 0.75f;
     const float minHorizontalSpeed = 0.20f;
-
-
-    /*
-        Se hitFactor è troppo vicino a zero, la palla andrebbe quasi perfettamente verticale.
-        Per evitare traiettorie noiose, manteniamo sempre un minimo movimento orizzontale.
-    */
 
     if (hitFactor > -0.15f && hitFactor < 0.15f)
     {
@@ -418,23 +188,44 @@ void BallClass::BounceY()
     m_velocityY *= -1.0f;
 }
 
+
 void BallClass::BounceX()
 {
     m_velocityX *= -1.0f;
 }
 
 
-void BallClass::Reset(float x, float y, float velocityX, float velocityY)
+void BallClass::CheckWallCollision()
 {
-    m_x = x;
-    m_y = y;
+    float halfSize = m_size * 0.5f;
 
-    m_velocityX = velocityX;
-    m_velocityY = velocityY;
-}
+    float x = m_Rect.GetX();
+    float y = m_Rect.GetY();
 
+    // Bordo sinistro.
+    if (x - halfSize < -1.0f)
+    {
+        x = -1.0f + halfSize;
+        m_velocityX *= -1.0f;
+    }
 
-bool BallClass::IsBelowBottom() const
-{
-    return GetBottom() < -1.0f;
+    // Bordo destro.
+    if (x + halfSize > 1.0f)
+    {
+        x = 1.0f - halfSize;
+        m_velocityX *= -1.0f;
+    }
+
+    // Bordo alto.
+    if (y + halfSize > 1.0f)
+    {
+        y = 1.0f - halfSize;
+        m_velocityY *= -1.0f;
+    }
+
+    // Bordo basso:
+    // non rimbalziamo più.
+    // La sconfitta viene gestita da GameClass.
+
+    m_Rect.SetPosition(x, y);
 }

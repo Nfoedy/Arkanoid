@@ -1,19 +1,12 @@
 #pragma once
 
 #include <d3d11.h>
-#include <DirectXMath.h>
+
+#include "RectObject2D.h"
 
 
 class PaddleClass
 {
-private:
-    // Struttura di un vertice, deve combaciare con l'Input Layout di ColorShaderClass
-    struct VertexType
-    {
-        DirectX::XMFLOAT3 position; // POSITION nello shader
-        DirectX::XMFLOAT4 color;    // COLOR nello shader
-    };
-
 public:
     PaddleClass();
     ~PaddleClass();
@@ -27,55 +20,34 @@ public:
         float height
     );
 
+    // Rilascia le risorse.
+    void Shutdown();
 
-    void Shutdown();        // Rilascia vertex buffer e index buffer
-    void Render(ID3D11DeviceContext* deviceContext);       // Aggiorna il vertex buffer e manda i buffer alla pipeline
+    // Manda il rettangolo alla pipeline.
+    void Render(ID3D11DeviceContext* deviceContext);
 
-    // Movimento del paddle
+    // Movimento del paddle.
     void MoveLeft(float deltaTime);
     void MoveRight(float deltaTime);
 
-    // Ritorna il numero di indici da disegnare
+    // Riporta il paddle a una posizione iniziale.
+    void Reset(float x, float y);
+
     int GetIndexCount() const;
 
-    // Ritorna i lati del paddle.
-    // Servono per controllare le collisioni.
+    // Getter per collisioni.
     float GetLeft() const;
     float GetRight() const;
     float GetTop() const;
     float GetBottom() const;
 
-    // Riporta il paddle a una posizione iniziale.
-    void Reset(float x, float y);
-
 private:
-    bool InitializeBuffers(ID3D11Device* device);
-    void ShutdownBuffers();
-
-    // Aggiorna i vertici in base alla posizione attuale del paddle
-    bool UpdateBuffers(ID3D11DeviceContext* deviceContext);
-
-    // Manda vertex buffer e index buffer alla pipeline
-    void RenderBuffers(ID3D11DeviceContext* deviceContext);
-
-    // Impedisce al paddle di uscire dallo schermo
+    // Impedisce al paddle di uscire dallo schermo.
     void ClampToScreen();
 
 private:
-    ID3D11Buffer* m_vertexBuffer;
-    ID3D11Buffer* m_indexBuffer;
+    RectObject2D m_Rect;
 
-    int m_vertexCount;
-    int m_indexCount;
-
-    // Posizione centrale del paddle in clip space
-    float m_x;
-    float m_y;
-
-    // Dimensioni del paddle in clip space
-    float m_width;
-    float m_height;
-
-    // Velocità per frame, no delta time per ora
+    // Velocità in unità clip-space al secondo.
     float m_speed;
 };
