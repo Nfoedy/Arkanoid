@@ -65,9 +65,18 @@ private:
     void CheckGameState();
     void ResetGame();
 
+    void ResetRound();
+    void HandleBallLost();
+    void UpdateWindowTitle();
+
 private:
     int m_screenWidth;
     int m_screenHeight;
+
+    HWND m_hwnd;
+
+    int m_score;
+    int m_lives;
 
     D3DClass* m_D3D;
     InputClass* m_Input;

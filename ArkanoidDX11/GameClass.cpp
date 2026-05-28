@@ -15,6 +15,11 @@ GameClass::GameClass()
 
     m_Timer = nullptr;
 
+    m_hwnd = nullptr;
+
+    m_score = 0;
+    m_lives = 3;
+
     m_GameState = GameState::Playing;
 }
 
@@ -28,6 +33,8 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
 {
     m_screenWidth = width;
     m_screenHeight = height;
+
+    m_hwnd = hwnd;
 
     /*
         Inizializzazione Input
@@ -160,7 +167,11 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
         return false;
     }
 
+    m_score = 0;
+    m_lives = 3;
     m_GameState = GameState::Playing;
+
+    UpdateWindowTitle();
 
     return true;
 }
@@ -646,6 +657,9 @@ void GameClass::CheckBallBrickCollision()
                 Altrimenti consideriamo la collisione verticale.
             */
 
+            m_score += 100;
+            UpdateWindowTitle();
+
             if (minOverlapX < minOverlapY)
             {
                 m_Ball->BounceX();
@@ -655,10 +669,6 @@ void GameClass::CheckBallBrickCollision()
                 m_Ball->BounceY();
             }
 
-            /*
-                Esco dopo il primo brick colpito.
-                Così evitiamo di distruggere più brick nello stesso frame.
-            */
 
             break;
         }
@@ -689,7 +699,7 @@ void GameClass::CheckGameState()
 
     if (m_Ball->IsBelowBottom())
     {
-        m_GameState = GameState::Lose;
+        HandleBallLost();
         return;
     }
 
@@ -705,6 +715,19 @@ void GameClass::ResetGame()
 {
     m_GameState = GameState::Playing;
 
+    m_score = 0;
+    m_lives = 3;
+
+    ResetRound();
+
+    ShutdownBricks();
+    InitializeBricks();
+
+    UpdateWindowTitle();
+}
+
+void GameClass::ResetRound()
+{
     if (m_Paddle)
     {
         m_Paddle->Reset(
@@ -722,7 +745,59 @@ void GameClass::ResetGame()
             0.72f
         );
     }
+}
 
-    ShutdownBricks();
-    InitializeBricks();
+
+void GameClass::HandleBallLost()
+{
+    m_lives--;
+
+    if (m_lives <= 0)
+    {
+        m_lives = 0;
+        m_GameState = GameState::Lose;
+        UpdateWindowTitle();
+        return;
+    }
+
+    ResetRound();
+    UpdateWindowTitle();
+}
+
+void GameClass::UpdateWindowTitle()
+{
+    if (!m_hwnd)
+    {
+        return;
+    }
+
+    wchar_t title[256];
+
+    if (m_GameState == GameState::Playing)
+    {
+        swprintf_s(
+            title,
+            L"Arkanoid DX11 | Score: %d | Lives: %d",
+            m_score,
+            m_lives
+        );
+    }
+    else if (m_GameState == GameState::Win)
+    {
+        swprintf_s(
+            title,
+            L"Arkanoid DX11 | YOU WIN | Score: %d | Press R to restart",
+            m_score
+        );
+    }
+    else
+    {
+        swprintf_s(
+            title,
+            L"Arkanoid DX11 | GAME OVER | Score: %d | Press R to restart",
+            m_score
+        );
+    }
+
+    SetWindowText(m_hwnd, title);
 }
