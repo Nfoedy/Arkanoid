@@ -39,6 +39,7 @@ public:
     float GetTop() const;
     float GetBottom() const;
 
+
 private:
     RectObject2D m_Rect;
 

@@ -171,7 +171,10 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
 
     m_score = 0;
     m_lives = 3;
-    m_GameState = GameState::Playing;
+
+    m_GameState = GameState::Ready;
+
+    PositionBallOnPaddle();
 
     UpdateWindowTitle();
 
@@ -314,7 +317,22 @@ bool GameClass::Frame()
         ResetGame();
     }
 
-    if (m_GameState == GameState::Playing)
+    if (m_GameState == GameState::Ready)
+    {
+        /*
+            In Ready il paddle può muoversi,
+            e la palla resta agganciata sopra il paddle.
+        */
+
+        HandleInput(deltaTime);
+        PositionBallOnPaddle();
+
+        if (m_Input->IsKeyDown(VK_SPACE))
+        {
+            LaunchBall();
+        }
+    }
+    else if (m_GameState == GameState::Playing)
     {
         HandleInput(deltaTime);
         Update(deltaTime);
@@ -387,20 +405,25 @@ void GameClass::Render()
         Colore dello sfondo in base allo stato del gioco.
     */
 
-    if (m_GameState == GameState::Playing)
+    if (m_GameState == GameState::Ready)
+    {
+        // Blu più scuro: round pronto, palla ferma sopra il paddle.
+        m_D3D->BeginScene(0.08f, 0.08f, 0.30f, 1.0f);
+    }
+    else if (m_GameState == GameState::Playing)
     {
         // Blu: gioco in corso.
         m_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
-    }
-    else if (m_GameState == GameState::Win)
-    {
-        // Verde: vittoria.
-        m_D3D->BeginScene(0.1f, 0.35f, 0.1f, 1.0f);
     }
     else if (m_GameState == GameState::Paused)
     {
         // Grigio/scuro: pausa.
         m_D3D->BeginScene(0.12f, 0.12f, 0.12f, 1.0f);
+    }
+    else if (m_GameState == GameState::Win)
+    {
+        // Verde: vittoria.
+        m_D3D->BeginScene(0.1f, 0.35f, 0.1f, 1.0f);
     }
     else
     {
@@ -459,7 +482,7 @@ void GameClass::Render()
         m_ColorShader->RenderShader(m_D3D->GetDeviceContext());
 
         m_D3D->GetDeviceContext()->DrawIndexed(
-            m_Ball->GetIndexCount(),
+            m_Ball->GetIndexCount(), 
             0,
             0
         );
@@ -749,7 +772,7 @@ void GameClass::CheckGameState()
 
 void GameClass::ResetGame()
 {
-    m_GameState = GameState::Playing;
+    m_GameState = GameState::Ready;
 
     m_score = 0;
     m_lives = 3;
@@ -777,12 +800,12 @@ void GameClass::ResetRound()
 
     if (m_Ball)
     {
-        m_Ball->Reset(
+        m_Ball->SetVelocity(
             0.0f,
-            -0.2f,
-            0.6f,
-            0.72f
+            0.0f
         );
+
+        PositionBallOnPaddle();
     }
 }
 
@@ -800,6 +823,9 @@ void GameClass::HandleBallLost()
     }
 
     ResetRound();
+
+    m_GameState = GameState::Ready;
+
     UpdateWindowTitle();
 }
 
@@ -812,7 +838,16 @@ void GameClass::UpdateWindowTitle()
 
     wchar_t title[256];
 
-    if (m_GameState == GameState::Playing)
+    if (m_GameState == GameState::Ready)
+    {
+        swprintf_s(
+            title,
+            L"Arkanoid DX11 | Score: %d | Lives: %d | Press SPACE to launch",
+            m_score,
+            m_lives
+        );
+    }
+    else if (m_GameState == GameState::Playing)
     {
         swprintf_s(
             title,
@@ -848,4 +883,53 @@ void GameClass::UpdateWindowTitle()
     }
 
     SetWindowText(m_hwnd, title);
+}
+
+
+void GameClass::PositionBallOnPaddle()
+{
+    if (!m_Paddle || !m_Ball)
+    {
+        return;
+    }
+
+    /*
+        Mettiamo la palla sopra il paddle.
+
+        La palla ha size 0.06f, quindi metà size = 0.03f.
+        Aggiungiamo un piccolo offset sopra il paddle.
+    */
+
+    const float ballHalfSize = 0.03f;
+
+    float paddleCenterX =
+        (m_Paddle->GetLeft() + m_Paddle->GetRight()) * 0.5f;
+
+    float ballY =
+        m_Paddle->GetTop() + ballHalfSize;
+
+    m_Ball->SetPosition(paddleCenterX, ballY);
+}
+
+
+void GameClass::LaunchBall()
+{
+    if (!m_Ball)
+    {
+        return;
+    }
+
+    /*
+        Velocità iniziale della palla.
+        Usiamo valori coerenti con il delta time.
+    */
+
+    m_Ball->SetVelocity(
+        0.6f,
+        0.72f
+    );
+
+    m_GameState = GameState::Playing;
+
+    UpdateWindowTitle();
 }

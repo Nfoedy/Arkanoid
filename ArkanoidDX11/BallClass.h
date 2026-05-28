@@ -49,6 +49,12 @@ public:
     void BounceY();
     void BounceX();
 
+    // Imposta solo la posizione della palla.
+    void SetPosition(float x, float y);
+
+    // Imposta solo la velocità della palla.
+    void SetVelocity(float velocityX, float velocityY);
+
 private:
     void CheckWallCollision();
 

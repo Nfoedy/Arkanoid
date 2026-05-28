@@ -229,3 +229,16 @@ void BallClass::CheckWallCollision()
 
     m_Rect.SetPosition(x, y);
 }
+
+
+void BallClass::SetPosition(float x, float y)
+{
+    m_Rect.SetPosition(x, y);
+}
+
+
+void BallClass::SetVelocity(float velocityX, float velocityY)
+{
+    m_velocityX = velocityX;
+    m_velocityY = velocityY;
+}

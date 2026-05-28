@@ -14,12 +14,12 @@
 
 enum class GameState
 {
+    Ready,
     Playing,
     Paused,
     Win,
     Lose
 };
-
 
 class GameClass
 {
@@ -39,6 +39,8 @@ public:
     // Funzioni chiamate dal WndProc.
     void KeyDown(unsigned int key);
     void KeyUp(unsigned int key);
+
+
 
 private:
     void HandleInput(float deltaTime);
@@ -69,6 +71,11 @@ private:
     void ResetRound();
     void HandleBallLost();
     void UpdateWindowTitle();
+
+    void PositionBallOnPaddle();
+    void LaunchBall();
+
+
 
 private:
     int m_screenWidth;
