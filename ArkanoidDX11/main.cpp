@@ -1,36 +1,12 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h> // Libreria per le API Win32
-#include <vector>
 
-#include "D3DClass.h"
-#include "InputClass.h"
-#include "ColorShaderClass.h"
-#include "PaddleClass.h"
-#include "BallClass.h"
-#include "BrickClass.h"
+#include "GameClass.h"
 
 
-
-// Puntatore globale temporaneo alla classe DirectX
-D3DClass* g_D3D = nullptr;
-InputClass* g_Input = nullptr;
-ColorShaderClass* g_ColorShader = nullptr;
-PaddleClass* g_Paddle = nullptr;
-BallClass* g_Ball = nullptr;
-
-// Lista dei brick del livello.
-std::vector<BrickClass*> g_Bricks;
-
-
-enum class GameState
-{
-    Playing,
-    Win,
-    Lose
-};
-
-GameState g_GameState = GameState::Playing;
+// Puntatore globale temporaneo alla classe principale del gioco
+GameClass* g_Game = nullptr;
 
 
 // Funzione che Windows chiama ogni volta che succede qualcosa alla finestra
@@ -43,27 +19,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     switch (msg)
     {
-
         // Alla distruzione della finestra
     case WM_DESTROY:
-        PostQuitMessage(0);     // Dice di uscre dal message loop
+        PostQuitMessage(0);
         return 0;
 
         // Quando viene premuto un tasto della tastiera
     case WM_KEYDOWN:
-        // Se la classe input esiste, salvo il tasto come premuto
-        if (g_Input)
+        if (g_Game)
         {
-            g_Input->KeyDown(static_cast<unsigned int>(wParam));
+            g_Game->KeyDown(static_cast<unsigned int>(wParam));
         }
         return 0;
 
         // Quando viene rilasciato un tasto della tastiera
     case WM_KEYUP:
-        // Se la classe input esiste, salvo il tasto come rilasciato
-        if (g_Input)
+        if (g_Game)
         {
-            g_Input->KeyUp(static_cast<unsigned int>(wParam));
+            g_Game->KeyUp(static_cast<unsigned int>(wParam));
         }
         return 0;
     }
@@ -72,347 +45,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-
-
-// Funzione chiamata ogni frame
-// Funzione chiamata ogni frame
-void Render()
-{
-    if (g_GameState == GameState::Playing)
-    {
-        // Blu: gioco in corso.
-        g_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
-    }
-    else if (g_GameState == GameState::Win)
-    {
-        // Verde: vittoria.
-        g_D3D->BeginScene(0.1f, 0.35f, 0.1f, 1.0f);
-    }
-    else
-    {
-        // Rosso: sconfitta.
-        g_D3D->BeginScene(0.35f, 0.1f, 0.1f, 1.0f);
-    }
-
-    // Disegno tutti i brick attivi.
-    for (BrickClass* brick : g_Bricks)
-    {
-        if (brick && brick->IsActive())
-        {
-            brick->Render(g_D3D->GetDeviceContext());
-
-            g_ColorShader->RenderShader(g_D3D->GetDeviceContext());
-
-            g_D3D->GetDeviceContext()->DrawIndexed(
-                brick->GetIndexCount(),
-                0,
-                0
-            );
-        }
-    }
-
-
-    // Disegno il paddle.
-    g_Paddle->Render(g_D3D->GetDeviceContext());
-
-    g_ColorShader->RenderShader(g_D3D->GetDeviceContext());
-
-    g_D3D->GetDeviceContext()->DrawIndexed(
-        g_Paddle->GetIndexCount(),
-        0,
-        0
-    );
-
-
-    // Disegno la palla.
-    g_Ball->Render(g_D3D->GetDeviceContext());
-
-    g_ColorShader->RenderShader(g_D3D->GetDeviceContext());
-
-    g_D3D->GetDeviceContext()->DrawIndexed(
-        g_Ball->GetIndexCount(),
-        0,
-        0
-    );
-
-
-    g_D3D->EndScene();
-}
-
-
-// Funzione per collisioni
-bool CheckAABBCollision(
-    float leftA,
-    float rightA,
-    float topA,
-    float bottomA,
-    float leftB,
-    float rightB,
-    float topB,
-    float bottomB
-)
-{
-    // Se un oggetto è completamente a sinistra dell'altro, non collidono.
-    if (rightA < leftB)
-    {
-        return false;
-    }
-
-    // Se un oggetto è completamente a destra dell'altro, non collidono.
-    if (leftA > rightB)
-    {
-        return false;
-    }
-
-    // Se un oggetto è completamente sotto l'altro, non collidono.
-    if (topA < bottomB)
-    {
-        return false;
-    }
-
-    // Se un oggetto è completamente sopra l'altro, non collidono.
-    if (bottomA > topB)
-    {
-        return false;
-    }
-
-    // Se nessuna delle condizioni sopra è vera,
-    // allora i due rettangoli si stanno sovrapponendo.
-    return true;
-}
-
-
-
-void CheckPaddleBallCollision()
-{
-    if (!g_Paddle || !g_Ball)
-    {
-        return;
-    }
-
-    bool isColliding = CheckAABBCollision(
-        g_Paddle->GetLeft(),
-        g_Paddle->GetRight(),
-        g_Paddle->GetTop(),
-        g_Paddle->GetBottom(),
-
-        g_Ball->GetLeft(),
-        g_Ball->GetRight(),
-        g_Ball->GetTop(),
-        g_Ball->GetBottom()
-    );
-
-    // Facciamo rimbalzare la palla solo se:
-    // 1. sta collidendo con il paddle
-    // 2. sta andando verso il basso
-    //
-    // Questo evita rimbalzi strani quando la palla è già sopra il paddle.
-    if (isColliding && g_Ball->IsMovingDown())
-    {
-        g_Ball->BounceFromPaddle(g_Paddle->GetTop());
-    }
-}
-
-
-void CheckBallBrickCollision()
-{
-    if (!g_Ball)
-    {
-        return;
-    }
-
-    for (BrickClass* brick : g_Bricks)
-    {
-        if (!brick || !brick->IsActive())
-        {
-            continue;
-        }
-
-        bool isColliding = CheckAABBCollision(
-            g_Ball->GetLeft(),
-            g_Ball->GetRight(),
-            g_Ball->GetTop(),
-            g_Ball->GetBottom(),
-
-            brick->GetLeft(),
-            brick->GetRight(),
-            brick->GetTop(),
-            brick->GetBottom()
-        );
-
-        if (isColliding)
-        {
-            // Disattivo il brick.
-            // Nel Render() i brick inattivi non vengono disegnati.
-            brick->SetActive(false);
-
-            // Faccio rimbalzare la palla.
-            g_Ball->BounceY();
-
-            // Esco dopo il primo brick colpito.
-            // Così evitiamo di distruggere più brick nello stesso frame.
-            break;
-        }
-    }
-}
-
-
-bool InitializeBricks(ID3D11Device* device)
-{
-    /*
-        Creiamo una griglia semplice di brick.
-
-        Coordinate clip space:
-        x va da -1 a +1
-        y va da -1 a +1
-
-        I brick stanno nella parte alta dello schermo.
-    */
-
-    const int rows = 4;
-    const int columns = 8;
-
-    const float brickWidth = 0.20f;
-    const float brickHeight = 0.08f;
-
-    const float spacingX = 0.03f;
-    const float spacingY = 0.03f;
-
-    const float startX = -0.805f;
-    const float startY = 0.75f;
-
-    for (int row = 0; row < rows; row++)
-    {
-        for (int col = 0; col < columns; col++)
-        {
-            float x = startX + col * (brickWidth + spacingX);
-            float y = startY - row * (brickHeight + spacingY);
-
-            /*
-                Colore diverso in base alla riga.
-                Per ora è solo estetico.
-            */
-
-            float r = 1.0f;
-            float g = 0.3f + row * 0.15f;
-            float b = 0.2f + col * 0.05f;
-
-            BrickClass* brick = new BrickClass();
-
-            if (!brick)
-            {
-                return false;
-            }
-
-            if (!brick->Initialize(
-                device,
-                x,
-                y,
-                brickWidth,
-                brickHeight,
-                r,
-                g,
-                b
-            ))
-            {
-                brick->Shutdown();
-                delete brick;
-                brick = nullptr;
-
-                return false;
-            }
-
-            g_Bricks.push_back(brick);
-        }
-    }
-
-    return true;
-}
-
-
-
-void ShutdownBricks()
-{
-    for (BrickClass* brick : g_Bricks)
-    {
-        if (brick)
-        {
-            brick->Shutdown();
-            delete brick;
-        }
-    }
-
-    g_Bricks.clear();
-}
-
-
-
-bool AreAllBricksDestroyed()
-{
-    for (BrickClass* brick : g_Bricks)
-    {
-        if (brick && brick->IsActive())
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-
-void ResetGame()
-{
-    g_GameState = GameState::Playing;
-
-    if (g_Paddle)
-    {
-        g_Paddle->Reset(
-            0.0f,   // x
-            -0.8f   // y
-        );
-    }
-
-    if (g_Ball)
-    {
-        g_Ball->Reset(
-            0.0f,    // x
-            -0.2f,   // y
-            0.01f,   // velocityX
-            0.012f   // velocityY
-        );
-    }
-
-    ShutdownBricks();
-    InitializeBricks(g_D3D->GetDevice());
-}
-
-
-void CheckGameState()
-{
-    if (!g_Ball)
-    {
-        return;
-    }
-
-    // Sconfitta: la palla è uscita sotto lo schermo.
-    if (g_Ball->IsBelowBottom())
-    {
-        g_GameState = GameState::Lose;
-        return;
-    }
-
-    // Vittoria: tutti i brick sono stati distrutti.
-    if (AreAllBricksDestroyed())
-    {
-        g_GameState = GameState::Win;
-        return;
-    }
-}
-
-
-
-// ================================================
 
 // è il main(), ma per programmi Win32 con finestra
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, int nCmdShow)
@@ -426,7 +58,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
     const int WIDTH = 800;
     const int HEIGHT = 600;
 
-    // Titilo della finestra
+    // Titolo della finestra
     const wchar_t* CLASS_NAME = L"ArkanoidDX11WindowClass";
 
 
@@ -434,28 +66,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         1. Registrazione della classe finestra
     */
 
-    // Contiene le info per dire a Windows che finestra voglio creare
     WNDCLASSEX wc = {};
 
-    // Dimensione della struttura.
     wc.cbSize = sizeof(WNDCLASSEX);
-
-    // Stile della finestra.
     wc.style = CS_HREDRAW | CS_VREDRAW;
-
-    // Funzione che gestisce i messaggi della finestra.
     wc.lpfnWndProc = WndProc;
-
-    // Istanza dell'applicazione.
     wc.hInstance = hInstance;
-
-    // Cursore standard della freccia.
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-
-    // Nome della classe finestra.
     wc.lpszClassName = CLASS_NAME;
 
-    // Registriamo la classe finestra presso Windows.
     if (!RegisterClassEx(&wc))
     {
         MessageBox(nullptr, L"Errore registrazione finestra!", L"Errore", MB_OK);
@@ -467,7 +86,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         2. Calcolo dimensione reale della finestra
     */
 
-
     RECT windowRect = { 0, 0, WIDTH, HEIGHT };
 
     AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
@@ -478,25 +96,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
     */
 
     HWND hwnd = CreateWindowEx(
-        0,                                      // stile esteso, per ora nessuno
-        CLASS_NAME,                             // classe finestra registrata prima
-        L"Arkanoid DX11",                       // titolo visibile della finestra
-        WS_OVERLAPPEDWINDOW,                    // finestra standard con bordi e titolo
-        CW_USEDEFAULT,                          // posizione X automatica
-        CW_USEDEFAULT,                          // posizione Y automatica
-        windowRect.right - windowRect.left,     // larghezza totale finestra
-        windowRect.bottom - windowRect.top,     // altezza totale finestra
-        nullptr,                                // finestra padre, non serve
-        nullptr,                                // menu, non serve
-        hInstance,                              // istanza applicazione
-        nullptr                                 // dati extra, non servono
+        0,
+        CLASS_NAME,
+        L"Arkanoid DX11",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        windowRect.right - windowRect.left,
+        windowRect.bottom - windowRect.top,
+        nullptr,
+        nullptr,
+        hInstance,
+        nullptr
     );
 
-    // Se hwnd è nullptr, la finestra non è stata creata correttamente.
     if (!hwnd)
     {
-        MessageBox(nullptr, L"Errore registrazione finestra!", L"Errore", MB_OK);
-
+        MessageBox(nullptr, L"Errore creazione finestra!", L"Errore", MB_OK);
         return -1;
     }
 
@@ -505,371 +121,70 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
         4. Mostrare la finestra
     */
 
-    // Mostra la finestra a schermo.
     ShowWindow(hwnd, nCmdShow);
-
-    // Forza un primo aggiornamento della finestra.
     UpdateWindow(hwnd);
 
 
     /*
-        Inizializzazione Input
+        5. Inizializzazione GameClass
     */
 
-    g_Input = new InputClass();
+    g_Game = new GameClass();
 
-    if (!g_Input)
+    if (!g_Game)
     {
         return -1;
     }
 
-    g_Input->Initialize();
-
-
-
-    /*
-        Inizializzazione DirectX
-    */
-
-    g_D3D = new D3DClass();
-
-    if (!g_D3D)
+    if (!g_Game->Initialize(hwnd, WIDTH, HEIGHT))
     {
-        delete g_Input;
-        g_Input = nullptr;
+        MessageBox(nullptr, L"Errore inizializzazione GameClass!", L"Errore", MB_OK);
 
-        return -1;
-    }
-
-    if (!g_D3D->Initialize(hwnd, WIDTH, HEIGHT))
-    {
-        MessageBox(nullptr, L"Errore inizializzazione DirectX!", L"Errore", MB_OK);
-
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-
-        delete g_Input;
-        g_Input = nullptr;
-
-        return -1;
-    }
-
-    /*
-        Inizializzazione Color Shader
-    */
-
-    g_ColorShader = new ColorShaderClass();
-
-    if (!g_ColorShader)
-    {
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-
-        delete g_Input;
-        g_Input = nullptr;
-
-        return -1;
-    }
-
-    if (!g_ColorShader->Initialize(g_D3D->GetDevice(), hwnd))
-    {
-        MessageBox(nullptr, L"Errore inizializzazione Color Shader!", L"Errore", MB_OK);
-
-        g_ColorShader->Shutdown();
-        delete g_ColorShader;
-        g_ColorShader = nullptr;
-
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-
-        delete g_Input;
-        g_Input = nullptr;
+        g_Game->Shutdown();
+        delete g_Game;
+        g_Game = nullptr;
 
         return -1;
     }
 
 
     /*
-        Inizializzazione Paddle
+        6. Message loop
     */
 
-    g_Paddle = new PaddleClass();
-
-    if (!g_Paddle)
-    {
-        g_ColorShader->Shutdown();
-        delete g_ColorShader;
-        g_ColorShader = nullptr;
-
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-
-        delete g_Input;
-        g_Input = nullptr;
-
-        return -1;
-    }
-
-    if (!g_Paddle->Initialize(
-        g_D3D->GetDevice(),
-        0.0f,    // x: centro dello schermo
-        -0.8f,   // y: in basso
-        0.35f,   // width
-        0.08f    // height
-    ))
-    {
-        MessageBox(nullptr, L"Errore inizializzazione Paddle!", L"Errore", MB_OK);
-
-        g_Paddle->Shutdown();
-        delete g_Paddle;
-        g_Paddle = nullptr;
-
-        g_ColorShader->Shutdown();
-        delete g_ColorShader;
-        g_ColorShader = nullptr;
-
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-
-        delete g_Input;
-        g_Input = nullptr;
-
-        return -1;
-    }
-
-
-    /*
-        Inizializzazione Ball
-    */
-
-    g_Ball = new BallClass();
-
-    if (!g_Ball)
-    {
-        g_Paddle->Shutdown();
-        delete g_Paddle;
-        g_Paddle = nullptr;
-
-        g_ColorShader->Shutdown();
-        delete g_ColorShader;
-        g_ColorShader = nullptr;
-
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-
-        delete g_Input;
-        g_Input = nullptr;
-
-        return -1;
-    }
-
-    if (!g_Ball->Initialize(
-        g_D3D->GetDevice(),
-        0.0f,    // x
-        -0.2f,   // y
-        0.06f    // size
-    ))
-    {
-        MessageBox(nullptr, L"Errore inizializzazione Ball!", L"Errore", MB_OK);
-
-        g_Ball->Shutdown();
-        delete g_Ball;
-        g_Ball = nullptr;
-
-        g_Paddle->Shutdown();
-        delete g_Paddle;
-        g_Paddle = nullptr;
-
-        g_ColorShader->Shutdown();
-        delete g_ColorShader;
-        g_ColorShader = nullptr;
-
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-
-        delete g_Input;
-        g_Input = nullptr;
-
-        return -1;
-    }
-
-
-    /*
-        Inizializzazione Bricks
-    */
-
-    if (!InitializeBricks(g_D3D->GetDevice()))
-    {
-        MessageBox(nullptr, L"Errore inizializzazione Bricks!", L"Errore", MB_OK);
-
-        ShutdownBricks();
-
-        g_Ball->Shutdown();
-        delete g_Ball;
-        g_Ball = nullptr;
-
-        g_Paddle->Shutdown();
-        delete g_Paddle;
-        g_Paddle = nullptr;
-
-        g_ColorShader->Shutdown();
-        delete g_ColorShader;
-        g_ColorShader = nullptr;
-
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-
-        delete g_Input;
-        g_Input = nullptr;
-
-        return -1;
-    }
-
-
-
-    /*
-        5. Message loop
-    */
-
-    // MSG contiene i messaggi che Windows invia alla nostra applicazione.
     MSG msg = {};
 
-    // Il programma continua finché non riceve WM_QUIT.
     while (msg.message != WM_QUIT)
     {
-
-        // PM_REMOVE significa: se trova un messaggio, rimuovilo dalla coda.
         if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
-            // Traduce alcuni messaggi da tastiera.
             TranslateMessage(&msg);
-
-            // Manda il messaggio alla WndProc.
             DispatchMessage(&msg);
         }
         else
         {
-            if (g_Input && g_Input->IsKeyDown(VK_ESCAPE))
+            if (g_Game)
             {
-                PostQuitMessage(0);
-            }
-
-            // Restart con R se siamo in win/lose.
-            if (g_Input && g_Input->IsKeyDown('R') && g_GameState != GameState::Playing)
-            {
-                ResetGame();
-            }
-
-            if (g_GameState == GameState::Playing)
-            {
-                if (g_Input && g_Paddle)
+                if (!g_Game->Frame())
                 {
-                    if (g_Input->IsKeyDown(VK_LEFT) || g_Input->IsKeyDown('A'))
-                    {
-                        g_Paddle->MoveLeft();
-                    }
-
-                    if (g_Input->IsKeyDown(VK_RIGHT) || g_Input->IsKeyDown('D'))
-                    {
-                        g_Paddle->MoveRight();
-                    }
+                    PostQuitMessage(0);
                 }
-
-                if (g_Ball)
-                {
-                    g_Ball->Update();
-                }
-
-                CheckPaddleBallCollision();
-
-                CheckBallBrickCollision();
-
-                CheckGameState();
             }
-
-            Render();
         }
     }
 
 
     /*
-        Shutdown Bricks
+        7. Shutdown GameClass
     */
 
-    ShutdownBricks();
-
-
-
-    /*
-        Shutdown Ball
-    */
-
-    if (g_Ball)
+    if (g_Game)
     {
-        g_Ball->Shutdown();
-        delete g_Ball;
-        g_Ball = nullptr;
-    }
-
-    /*
-        Shutdown Paddle
-    */
-
-    if (g_Paddle)
-    {
-        g_Paddle->Shutdown();
-        delete g_Paddle;
-        g_Paddle = nullptr;
+        g_Game->Shutdown();
+        delete g_Game;
+        g_Game = nullptr;
     }
 
 
-
-    /*
-        Shutdown Color Shader
-    */
-
-    if (g_ColorShader)
-    {
-        g_ColorShader->Shutdown();
-        delete g_ColorShader;
-        g_ColorShader = nullptr;
-    }
-
-
-
-    /*
-        Shutdown DirectX
-    */
-
-    if (g_D3D)
-    {
-        g_D3D->Shutdown();
-        delete g_D3D;
-        g_D3D = nullptr;
-    }
-
-
-    /*
-        Shutdown Input
-    */
-
-    if (g_Input)
-    {
-        delete g_Input;
-        g_Input = nullptr;
-    }
-
-
-    // Quando usco dal loop, ritorno il codice di uscita.
     return static_cast<int>(msg.wParam);
-
-
 }
