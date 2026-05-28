@@ -45,7 +45,7 @@ public:
     bool IsMovingDown() const;
 
     // Fa rimbalzare la palla sul paddle.
-    void BounceFromPaddle(float paddleTop);
+    void BounceFromPaddle(float paddleTop, float hitFactor);
 
     // Inverte la direzione verticale della palla la uso quando la palla colpisce un brick.
     void BounceY();

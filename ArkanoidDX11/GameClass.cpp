@@ -521,7 +521,23 @@ void GameClass::CheckPaddleBallCollision()
 
     if (isColliding && m_Ball->IsMovingDown())
     {
-        m_Ball->BounceFromPaddle(m_Paddle->GetTop());
+
+        float paddleCenter =
+            (m_Paddle->GetLeft() + m_Paddle->GetRight()) * 0.5f;
+
+        float paddleHalfWidth =
+            (m_Paddle->GetRight() - m_Paddle->GetLeft()) * 0.5f;
+
+        float ballCenter =
+            (m_Ball->GetLeft() + m_Ball->GetRight()) * 0.5f;
+
+        float hitFactor =
+            (ballCenter - paddleCenter) / paddleHalfWidth;
+
+        m_Ball->BounceFromPaddle(
+            m_Paddle->GetTop(),
+            hitFactor
+        );
     }
 }
 

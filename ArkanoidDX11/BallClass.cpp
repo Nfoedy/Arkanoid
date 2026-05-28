@@ -341,19 +341,58 @@ bool BallClass::IsMovingDown() const
 }
 
 
-void BallClass::BounceFromPaddle(float paddleTop)
+void BallClass::BounceFromPaddle(float paddleTop, float hitFactor)
 {
-    // Spostiamo la palla appena sopra il paddle.
-    // Questo evita che rimanga incastrata dentro il paddle
-    // e continui a invertire direzione ogni frame.
+    /*
+        Spostiamo la palla appena sopra il paddle.
+        Questo evita che rimanga incastrata dentro il paddle.
+    */
+
     m_y = paddleTop + (m_size * 0.5f);
 
-    // Se la palla stava andando verso il basso,
-    // invertiamo la direzione verticale.
+
+    /*
+        Limitiamo hitFactor tra -1 e +1.
+
+        hitFactor:
+        -1 = colpito lato sinistro del paddle
+         0 = colpito centro del paddle
+        +1 = colpito lato destro del paddle
+    */
+
+    if (hitFactor < -1.0f)
+    {
+        hitFactor = -1.0f;
+    }
+
+    if (hitFactor > 1.0f)
+    {
+        hitFactor = 1.0f;
+    }
+
+
+    /*
+        Dopo aver colpito il paddle, la palla deve andare verso l'alto.
+        Quindi rendiamo la velocità Y positiva.
+    */
+
     if (m_velocityY < 0.0f)
     {
         m_velocityY *= -1.0f;
     }
+
+
+    /*
+        Modifichiamo la velocità orizzontale in base al punto di impatto.
+
+        Se hitFactor è negativo  la palla va a sinistra.
+        Se hitFactor è positivo  la palla va a destra.
+        Se hitFactor è circa zero  la palla va quasi verticale.
+    */
+
+    const float maxHorizontalSpeed = 0.018f;
+
+    m_velocityX = hitFactor * maxHorizontalSpeed;
 }
 
 
