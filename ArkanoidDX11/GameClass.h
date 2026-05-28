@@ -15,6 +15,7 @@
 enum class GameState
 {
     Playing,
+    Paused,
     Win,
     Lose
 };
@@ -77,6 +78,8 @@ private:
 
     int m_score;
     int m_lives;
+
+    bool m_pWasDown;
 
     D3DClass* m_D3D;
     InputClass* m_Input;

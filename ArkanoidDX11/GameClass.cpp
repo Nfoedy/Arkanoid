@@ -20,6 +20,8 @@ GameClass::GameClass()
     m_score = 0;
     m_lives = 3;
 
+    m_pWasDown = false;
+
     m_GameState = GameState::Playing;
 }
 
@@ -273,12 +275,41 @@ bool GameClass::Frame()
         deltaTime = 0.05f;
     }
 
+    // ESC chiude il gioco.
     if (m_Input->IsKeyDown(VK_ESCAPE))
     {
         return false;
     }
 
-    if (m_Input->IsKeyDown('R') && m_GameState != GameState::Playing)
+
+    /*
+        Gestione pausa con P.
+
+        Usiamo m_pWasDown per rilevare solo il "colpo singolo"
+        del tasto, non il fatto che sia tenuto premuto.
+    */
+
+    bool pIsDown = m_Input->IsKeyDown('P');
+
+    if (pIsDown && !m_pWasDown)
+    {
+        if (m_GameState == GameState::Playing)
+        {
+            m_GameState = GameState::Paused;
+            UpdateWindowTitle();
+        }
+        else if (m_GameState == GameState::Paused)
+        {
+            m_GameState = GameState::Playing;
+            UpdateWindowTitle();
+        }
+    }
+
+    m_pWasDown = pIsDown;
+
+
+    // Restart con R se siamo in Win o Lose.
+    if (m_Input->IsKeyDown('R') && m_GameState != GameState::Playing && m_GameState != GameState::Paused)
     {
         ResetGame();
     }
@@ -365,6 +396,11 @@ void GameClass::Render()
     {
         // Verde: vittoria.
         m_D3D->BeginScene(0.1f, 0.35f, 0.1f, 1.0f);
+    }
+    else if (m_GameState == GameState::Paused)
+    {
+        // Grigio/scuro: pausa.
+        m_D3D->BeginScene(0.12f, 0.12f, 0.12f, 1.0f);
     }
     else
     {
@@ -718,6 +754,8 @@ void GameClass::ResetGame()
     m_score = 0;
     m_lives = 3;
 
+    m_pWasDown = false;
+
     ResetRound();
 
     ShutdownBricks();
@@ -725,6 +763,7 @@ void GameClass::ResetGame()
 
     UpdateWindowTitle();
 }
+
 
 void GameClass::ResetRound()
 {
@@ -778,6 +817,15 @@ void GameClass::UpdateWindowTitle()
         swprintf_s(
             title,
             L"Arkanoid DX11 | Score: %d | Lives: %d",
+            m_score,
+            m_lives
+        );
+    }
+    else if (m_GameState == GameState::Paused)
+    {
+        swprintf_s(
+            title,
+            L"Arkanoid DX11 | PAUSED | Score: %d | Lives: %d | Press P to resume",
             m_score,
             m_lives
         );
