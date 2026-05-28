@@ -554,8 +554,60 @@ void GameClass::CheckBallBrickCollision()
 
         if (isColliding)
         {
+            /*
+                Calcoliamo quanto la palla è entrata nel brick
+                da ogni lato.
+
+                L'idea è:
+                - se la sovrapposizione minore è sull'asse X,
+                  allora la collisione è laterale
+                - se la sovrapposizione minore è sull'asse Y,
+                  allora la collisione è verticale
+            */
+
+            float overlapFromLeft = m_Ball->GetRight() - brick->GetLeft();
+            float overlapFromRight = brick->GetRight() - m_Ball->GetLeft();
+
+            float overlapFromBottom = m_Ball->GetTop() - brick->GetBottom();
+            float overlapFromTop = brick->GetTop() - m_Ball->GetBottom();
+
+            float minOverlapX =
+                overlapFromLeft < overlapFromRight
+                ? overlapFromLeft
+                : overlapFromRight;
+
+            float minOverlapY =
+                overlapFromBottom < overlapFromTop
+                ? overlapFromBottom
+                : overlapFromTop;
+
+            /*
+                Disattiviamo il brick colpito.
+                Nel Render(), i brick inattivi non vengono disegnati.
+            */
+
             brick->SetActive(false);
-            m_Ball->BounceY();
+
+            /*
+                Se la penetrazione minore è sull'asse X,
+                significa che la palla ha colpito il brick lateralmente.
+
+                Altrimenti consideriamo la collisione verticale.
+            */
+
+            if (minOverlapX < minOverlapY)
+            {
+                m_Ball->BounceX();
+            }
+            else
+            {
+                m_Ball->BounceY();
+            }
+
+            /*
+                Esco dopo il primo brick colpito.
+                Così evitiamo di distruggere più brick nello stesso frame.
+            */
 
             break;
         }

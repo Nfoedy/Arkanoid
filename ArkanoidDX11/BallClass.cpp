@@ -362,6 +362,11 @@ void BallClass::BounceY()
     m_velocityY *= -1.0f;
 }
 
+void BallClass::BounceX()
+{
+    m_velocityX *= -1.0f;
+}
+
 
 void BallClass::Reset(float x, float y, float velocityX, float velocityY)
 {

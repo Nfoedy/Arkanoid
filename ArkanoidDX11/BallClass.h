@@ -49,6 +49,9 @@ public:
 
     // Inverte la direzione verticale della palla la uso quando la palla colpisce un brick.
     void BounceY();
+    // Inverte la direzione orizzontale della palla, la useremo quando la palla colpisce un brick lateralmente.
+    void BounceX();
+
 
     // Reset della palla a una posizione e velocità iniziale.
     void Reset(float x, float y, float velocityX, float velocityY);
