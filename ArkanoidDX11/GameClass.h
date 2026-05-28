@@ -9,6 +9,7 @@
 #include "PaddleClass.h"
 #include "BallClass.h"
 #include "BrickClass.h"
+#include "TimerClass.h"
 
 
 enum class GameState
@@ -39,8 +40,8 @@ public:
     void KeyUp(unsigned int key);
 
 private:
-    void HandleInput();
-    void Update();
+    void HandleInput(float deltaTime);
+    void Update(float deltaTime);
     void Render();
 
     bool InitializeBricks();
@@ -74,6 +75,8 @@ private:
 
     PaddleClass* m_Paddle;
     BallClass* m_Ball;
+
+    TimerClass* m_Timer;
 
     std::vector<BrickClass*> m_Bricks;
 

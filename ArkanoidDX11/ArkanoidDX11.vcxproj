@@ -148,6 +148,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PaddleClass.cpp" />
     <ClCompile Include="QuadClass..cpp" />
+    <ClCompile Include="TimerClass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BallClass.h" />
@@ -158,6 +159,7 @@
     <ClInclude Include="InputClass.h" />
     <ClInclude Include="PaddleClass.h" />
     <ClInclude Include="QuadClass.h" />
+    <ClInclude Include="TimerClass.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="color.ps" />

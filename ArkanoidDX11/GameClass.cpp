@@ -13,6 +13,8 @@ GameClass::GameClass()
     m_Paddle = nullptr;
     m_Ball = nullptr;
 
+    m_Timer = nullptr;
+
     m_GameState = GameState::Playing;
 }
 
@@ -39,6 +41,21 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
     }
 
     m_Input->Initialize();
+
+
+    /*
+        Inizializzazione Timer
+    */
+
+    m_Timer = new TimerClass();
+
+    if (!m_Timer)
+    {
+        Shutdown();
+        return false;
+    }
+
+    m_Timer->Initialize();
 
 
     /*
@@ -215,23 +232,41 @@ void GameClass::Shutdown()
         delete m_Input;
         m_Input = nullptr;
     }
+
+    /*
+        Shutdown Timer
+    */
+
+    if (m_Timer)
+    {
+        delete m_Timer;
+        m_Timer = nullptr;
+    }
 }
 
 
 bool GameClass::Frame()
 {
-    if (!m_Input)
+    if (!m_Input || !m_Timer)
     {
         return false;
     }
 
-    // ESC chiude il gioco.
+    m_Timer->Frame();
+
+    float deltaTime = m_Timer->GetDeltaTime();
+
+    // Evita salti enormi se il programma si blocca per un attimo.
+    if (deltaTime > 0.05f)
+    {
+        deltaTime = 0.05f;
+    }
+
     if (m_Input->IsKeyDown(VK_ESCAPE))
     {
         return false;
     }
 
-    // Restart con R se siamo in Win o Lose.
     if (m_Input->IsKeyDown('R') && m_GameState != GameState::Playing)
     {
         ResetGame();
@@ -239,8 +274,8 @@ bool GameClass::Frame()
 
     if (m_GameState == GameState::Playing)
     {
-        HandleInput();
-        Update();
+        HandleInput(deltaTime);
+        Update(deltaTime);
 
         CheckPaddleBallCollision();
         CheckBallBrickCollision();
@@ -271,7 +306,7 @@ void GameClass::KeyUp(unsigned int key)
 }
 
 
-void GameClass::HandleInput()
+void GameClass::HandleInput(float deltaTime)
 {
     if (!m_Input || !m_Paddle)
     {
@@ -280,21 +315,21 @@ void GameClass::HandleInput()
 
     if (m_Input->IsKeyDown(VK_LEFT) || m_Input->IsKeyDown('A'))
     {
-        m_Paddle->MoveLeft();
+        m_Paddle->MoveLeft(deltaTime);
     }
 
     if (m_Input->IsKeyDown(VK_RIGHT) || m_Input->IsKeyDown('D'))
     {
-        m_Paddle->MoveRight();
+        m_Paddle->MoveRight(deltaTime);
     }
 }
 
 
-void GameClass::Update()
+void GameClass::Update(float deltaTime)
 {
     if (m_Ball)
     {
-        m_Ball->Update();
+        m_Ball->Update(deltaTime);
     }
 }
 
@@ -683,8 +718,8 @@ void GameClass::ResetGame()
         m_Ball->Reset(
             0.0f,
             -0.2f,
-            0.01f,
-            0.012f
+            0.6f,
+            0.72f
         );
     }
 

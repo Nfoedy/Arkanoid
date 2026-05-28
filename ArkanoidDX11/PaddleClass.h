@@ -32,8 +32,8 @@ public:
     void Render(ID3D11DeviceContext* deviceContext);       // Aggiorna il vertex buffer e manda i buffer alla pipeline
 
     // Movimento del paddle
-    void MoveLeft();
-    void MoveRight();
+    void MoveLeft(float deltaTime);
+    void MoveRight(float deltaTime);
 
     // Ritorna il numero di indici da disegnare
     int GetIndexCount() const;

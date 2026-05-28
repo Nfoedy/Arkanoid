@@ -27,7 +27,7 @@ public:
     void Shutdown();
 
     // Aggiorna posizione e rimbalzi
-    void Update();
+    void Update(float deltaTime);
 
     // Aggiorna il vertex buffer e manda i buffer alla pipeline
     void Render(ID3D11DeviceContext* deviceContext);

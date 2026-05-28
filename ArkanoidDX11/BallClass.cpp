@@ -16,8 +16,8 @@ BallClass::BallClass()
 
     m_size = 0.0f;
 
-    m_velocityX = 0.01f;
-    m_velocityY = 0.012f;
+    m_velocityX = 0.6f;
+    m_velocityY = 0.72f;
 }
 
 
@@ -47,13 +47,12 @@ void BallClass::Shutdown()
 }
 
 
-void BallClass::Update()
+void BallClass::Update(float deltaTime)
 {
-    // Aggiorno la posizione della palla.
-    m_x += m_velocityX;
-    m_y += m_velocityY;
+    // Aggiorno la posizione della palla usando il delta time.
+    m_x += m_velocityX * deltaTime;
+    m_y += m_velocityY * deltaTime;
 
-    // Controllo se ha toccato i bordi dello schermo.
     CheckWallCollision();
 }
 
@@ -383,16 +382,34 @@ void BallClass::BounceFromPaddle(float paddleTop, float hitFactor)
 
 
     /*
-        Modifichiamo la velocità orizzontale in base al punto di impatto.
-
-        Se hitFactor è negativo  la palla va a sinistra.
-        Se hitFactor è positivo  la palla va a destra.
-        Se hitFactor è circa zero  la palla va quasi verticale.
+        Ora che usiamo delta time, la velocità è in unità al secondo.
+        Quindi servono valori coerenti con m_velocityX = 0.6f e m_velocityY = 0.72f.
     */
 
-    const float maxHorizontalSpeed = 0.018f;
+    const float maxHorizontalSpeed = 0.75f;
+    const float minHorizontalSpeed = 0.20f;
 
-    m_velocityX = hitFactor * maxHorizontalSpeed;
+
+    /*
+        Se hitFactor è troppo vicino a zero, la palla andrebbe quasi perfettamente verticale.
+        Per evitare traiettorie noiose, manteniamo sempre un minimo movimento orizzontale.
+    */
+
+    if (hitFactor > -0.15f && hitFactor < 0.15f)
+    {
+        if (m_velocityX < 0.0f)
+        {
+            m_velocityX = -minHorizontalSpeed;
+        }
+        else
+        {
+            m_velocityX = minHorizontalSpeed;
+        }
+    }
+    else
+    {
+        m_velocityX = hitFactor * maxHorizontalSpeed;
+    }
 }
 
 

@@ -15,7 +15,7 @@ PaddleClass::PaddleClass()
     m_width = 0.0f;
     m_height = 0.0f;
 
-    m_speed = 0.02f;
+    m_speed = 1.2f;
 }
 
 
@@ -57,16 +57,16 @@ void PaddleClass::Render(ID3D11DeviceContext* deviceContext)
 }
 
 
-void PaddleClass::MoveLeft()
+void PaddleClass::MoveLeft(float deltaTime)
 {
-    m_x -= m_speed;
+    m_x -= m_speed * deltaTime;
     ClampToScreen();
 }
 
 
-void PaddleClass::MoveRight()
+void PaddleClass::MoveRight(float deltaTime)
 {
-    m_x += m_speed;
+    m_x += m_speed * deltaTime;
     ClampToScreen();
 }
 
