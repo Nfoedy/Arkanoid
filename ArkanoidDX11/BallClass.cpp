@@ -1,12 +1,13 @@
 #include "BallClass.h"
+#include "GameConfig.h"
 
 
 BallClass::BallClass()
 {
     m_size = 0.0f;
 
-    m_velocityX = 0.6f;
-    m_velocityY = 0.72f;
+    m_velocityX = GameConfig::BallInitialVelocityX;
+    m_velocityY = GameConfig::BallInitialVelocityY;
 }
 
 
@@ -162,8 +163,8 @@ void BallClass::BounceFromPaddle(float paddleTop, float hitFactor)
         Velocità orizzontale basata sul punto di impatto.
     */
 
-    const float maxHorizontalSpeed = 0.75f;
-    const float minHorizontalSpeed = 0.20f;
+    const float maxHorizontalSpeed = GameConfig::BallMaxHorizontalSpeed;
+    const float minHorizontalSpeed = GameConfig::BallMinHorizontalSpeed;
 
     if (hitFactor > -0.15f && hitFactor < 0.15f)
     {

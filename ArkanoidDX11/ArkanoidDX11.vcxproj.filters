@@ -80,6 +80,9 @@
     <ClInclude Include="RectObject2D.h">
       <Filter>File di origine</Filter>
     </ClInclude>
+    <ClInclude Include="GameConfig.h">
+      <Filter>File di origine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="color.ps" />

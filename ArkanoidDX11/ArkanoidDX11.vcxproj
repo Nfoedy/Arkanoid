@@ -157,6 +157,7 @@
     <ClInclude Include="ColorShaderClass.h" />
     <ClInclude Include="D3DClass.h" />
     <ClInclude Include="GameClass.h" />
+    <ClInclude Include="GameConfig.h" />
     <ClInclude Include="InputClass.h" />
     <ClInclude Include="PaddleClass.h" />
     <ClInclude Include="QuadClass.h" />

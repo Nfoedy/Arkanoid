@@ -1,9 +1,9 @@
 #include "PaddleClass.h"
-
+#include "GameConfig.h"
 
 PaddleClass::PaddleClass()
 {
-    m_speed = 1.2f;
+    m_speed = GameConfig::PaddleSpeed;
 }
 
 

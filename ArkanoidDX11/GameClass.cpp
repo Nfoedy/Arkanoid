@@ -1,4 +1,5 @@
 #include "GameClass.h"
+#include "GameConfig.h"
 
 
 GameClass::GameClass()
@@ -18,7 +19,7 @@ GameClass::GameClass()
     m_hwnd = nullptr;
 
     m_score = 0;
-    m_lives = 3;
+    m_lives = GameConfig::InitialLives;
 
     m_pWasDown = false;
 
@@ -121,10 +122,10 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
 
     if (!m_Paddle->Initialize(
         m_D3D->GetDevice(),
-        0.0f,
-        -0.8f,
-        0.35f,
-        0.08f
+        GameConfig::PaddleStartX,
+        GameConfig::PaddleStartY,
+        GameConfig::PaddleWidth,
+        GameConfig::PaddleHeight
     ))
     {
         MessageBox(nullptr, L"Errore inizializzazione Paddle!", L"Errore", MB_OK);
@@ -147,9 +148,9 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
 
     if (!m_Ball->Initialize(
         m_D3D->GetDevice(),
-        0.0f,
-        -0.2f,
-        0.06f
+        GameConfig::PaddleStartX,
+        GameConfig::PaddleStartY,
+        GameConfig::BallSize
     ))
     {
         MessageBox(nullptr, L"Errore inizializzazione Ball!", L"Errore", MB_OK);
@@ -170,7 +171,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
     }
 
     m_score = 0;
-    m_lives = 3;
+    m_lives = GameConfig::InitialLives;
 
     m_GameState = GameState::MainMenu;
 
@@ -248,6 +249,7 @@ void GameClass::Shutdown()
         delete m_Input;
         m_Input = nullptr;
     }
+
 
     /*
         Shutdown Timer
@@ -535,7 +537,7 @@ void GameClass::Render()
         m_ColorShader->RenderShader(m_D3D->GetDeviceContext());
 
         m_D3D->GetDeviceContext()->DrawIndexed(
-            m_Ball->GetIndexCount(), 
+            m_Ball->GetIndexCount(),
             0,
             0
         );
@@ -552,17 +554,17 @@ bool GameClass::InitializeBricks()
         return false;
     }
 
-    const int rows = 4;
-    const int columns = 8;
+    const int rows = GameConfig::BrickRows;
+    const int columns = GameConfig::BrickColumns;
 
-    const float brickWidth = 0.20f;
-    const float brickHeight = 0.08f;
+    const float brickWidth = GameConfig::BrickWidth;
+    const float brickHeight = GameConfig::BrickHeight;
 
-    const float spacingX = 0.03f;
-    const float spacingY = 0.03f;
+    const float spacingX = GameConfig::BrickSpacingX;
+    const float spacingY = GameConfig::BrickSpacingY;
 
-    const float startX = -0.805f;
-    const float startY = 0.75f;
+    const float startX = GameConfig::BrickStartX;
+    const float startY = GameConfig::BrickStartY;
 
     for (int row = 0; row < rows; row++)
     {
@@ -679,7 +681,6 @@ void GameClass::CheckPaddleBallCollision()
 
     if (isColliding && m_Ball->IsMovingDown())
     {
-
         float paddleCenter =
             (m_Paddle->GetLeft() + m_Paddle->GetRight()) * 0.5f;
 
@@ -763,14 +764,18 @@ void GameClass::CheckBallBrickCollision()
             brick->SetActive(false);
 
             /*
+                Score.
+            */
+
+            m_score += GameConfig::BrickScore;
+            UpdateWindowTitle();
+
+            /*
                 Se la penetrazione minore è sull'asse X,
                 significa che la palla ha colpito il brick lateralmente.
 
                 Altrimenti consideriamo la collisione verticale.
             */
-
-            m_score += 100;
-            UpdateWindowTitle();
 
             if (minOverlapX < minOverlapY)
             {
@@ -780,7 +785,6 @@ void GameClass::CheckBallBrickCollision()
             {
                 m_Ball->BounceY();
             }
-
 
             break;
         }
@@ -818,6 +822,7 @@ void GameClass::CheckGameState()
     if (AreAllBricksDestroyed())
     {
         m_GameState = GameState::Win;
+        UpdateWindowTitle();
         return;
     }
 }
@@ -834,8 +839,8 @@ void GameClass::ResetRound()
     if (m_Paddle)
     {
         m_Paddle->Reset(
-            0.0f,
-            -0.8f
+            GameConfig::PaddleStartX,
+            GameConfig::PaddleStartY
         );
     }
 
@@ -869,7 +874,6 @@ void GameClass::HandleBallLost()
 
     UpdateWindowTitle();
 }
-
 
 
 void GameClass::UpdateWindowTitle()
@@ -945,12 +949,9 @@ void GameClass::PositionBallOnPaddle()
 
     /*
         Mettiamo la palla sopra il paddle.
-
-        La palla ha size 0.06f, quindi metà size = 0.03f.
-        Aggiungiamo un piccolo offset sopra il paddle.
     */
 
-    const float ballHalfSize = 0.03f;
+    const float ballHalfSize = GameConfig::BallSize * 0.5f;
 
     float paddleCenterX =
         (m_Paddle->GetLeft() + m_Paddle->GetRight()) * 0.5f;
@@ -975,8 +976,8 @@ void GameClass::LaunchBall()
     */
 
     m_Ball->SetVelocity(
-        0.6f,
-        0.72f
+        GameConfig::BallInitialVelocityX,
+        GameConfig::BallInitialVelocityY
     );
 
     m_GameState = GameState::Playing;
@@ -988,7 +989,7 @@ void GameClass::LaunchBall()
 void GameClass::StartNewGame()
 {
     m_score = 0;
-    m_lives = 3;
+    m_lives = GameConfig::InitialLives;
 
     m_pWasDown = false;
 

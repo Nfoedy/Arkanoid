@@ -3,6 +3,7 @@
 #include <windows.h> // Libreria per le API Win32
 
 #include "GameClass.h"
+#include "GameConfig.h"
 
 
 // Puntatore globale temporaneo alla classe principale del gioco
@@ -55,8 +56,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
     // nCmdShow = Come mostrare la finestra
 
     // dim
-    const int WIDTH = 800;
-    const int HEIGHT = 600;
+    const int WIDTH = GameConfig::ScreenWidth;
+    const int HEIGHT = GameConfig::ScreenHeight;
 
     // Titolo della finestra
     const wchar_t* CLASS_NAME = L"ArkanoidDX11WindowClass";
