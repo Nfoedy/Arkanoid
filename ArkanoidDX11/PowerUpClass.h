@@ -5,28 +5,30 @@
 #include "RectObject2D.h"
 
 
-class BrickClass
+enum class PowerUpType
+{
+    PaddleGrow,
+    PaddleShrink,
+    BallSpeedUp
+};
+
+
+class PowerUpClass
 {
 public:
-    BrickClass();
-    ~BrickClass();
+    PowerUpClass();
+    ~PowerUpClass();
 
-    // Inizializza un singolo brick con posizione, dimensione e colore.
     bool Initialize(
         ID3D11Device* device,
         float x,
         float y,
-        float width,
-        float height,
-        float r,
-        float g,
-        float b
+        PowerUpType type
     );
 
-    // Rilascia le risorse DirectX del brick.
     void Shutdown();
 
-    // Manda vertex buffer e index buffer alla pipeline.
+    void Update(float deltaTime);
     void Render(ID3D11DeviceContext* deviceContext);
 
     int GetIndexCount() const;
@@ -34,17 +36,19 @@ public:
     bool IsActive() const;
     void SetActive(bool active);
 
+    PowerUpType GetType() const;
+
     float GetLeft() const;
     float GetRight() const;
     float GetTop() const;
     float GetBottom() const;
 
-    float GetX() const;
-    float GetY() const;
-
-
 private:
     RectObject2D m_Rect;
 
+    PowerUpType m_type;
+
     bool m_isActive;
+
+    float m_fallSpeed;
 };

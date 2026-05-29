@@ -147,6 +147,7 @@
     <ClCompile Include="InputClass.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PaddleClass.cpp" />
+    <ClCompile Include="PowerUpClass.cpp" />
     <ClCompile Include="QuadClass..cpp" />
     <ClCompile Include="RectObject2D.cpp" />
     <ClCompile Include="TimerClass.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="GameConfig.h" />
     <ClInclude Include="InputClass.h" />
     <ClInclude Include="PaddleClass.h" />
+    <ClInclude Include="PowerUpClass.h" />
     <ClInclude Include="QuadClass.h" />
     <ClInclude Include="RectObject2D.h" />
     <ClInclude Include="TimerClass.h" />

@@ -10,6 +10,7 @@
 #include "BallClass.h"
 #include "BrickClass.h"
 #include "TimerClass.h"
+#include "PowerUpClass.h"
 
 
 enum class GameState
@@ -77,6 +78,15 @@ private:
     void PositionBallOnPaddle();
     void LaunchBall();
 
+    void ShutdownPowerUps();
+    void UpdatePowerUps(float deltaTime);
+    void RenderPowerUps();
+
+    void TrySpawnPowerUp(float x, float y);
+    void CheckPaddlePowerUpCollision();
+
+    PowerUpType GetRandomPowerUpType() const;
+
 
 
 private:
@@ -102,4 +112,6 @@ private:
     std::vector<BrickClass*> m_Bricks;
 
     GameState m_GameState;
+
+    std::vector<PowerUpClass*> m_PowerUps;
 };

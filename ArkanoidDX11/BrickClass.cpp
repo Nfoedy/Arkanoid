@@ -90,3 +90,14 @@ float BrickClass::GetBottom() const
 {
     return m_Rect.GetBottom();
 }
+
+float BrickClass::GetX() const
+{
+    return (GetLeft() + GetRight()) * 0.5f;
+}
+
+
+float BrickClass::GetY() const
+{
+    return (GetTop() + GetBottom()) * 0.5f;
+}

@@ -1,3 +1,7 @@
+#include <cstdlib>
+#include <ctime>
+
+
 #include "GameClass.h"
 #include "GameConfig.h"
 
@@ -38,6 +42,8 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
     m_screenHeight = height;
 
     m_hwnd = hwnd;
+
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
     /*
         Inizializzazione Input
@@ -185,6 +191,14 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
 
 void GameClass::Shutdown()
 {
+
+    /*
+        Shutdown PowerUps
+    */
+
+    ShutdownPowerUps();
+
+
     /*
         Shutdown Bricks
     */
@@ -377,6 +391,8 @@ bool GameClass::Frame()
 
         CheckBallBrickCollision();
 
+        CheckPaddlePowerUpCollision();
+
         CheckGameState();
     }
 
@@ -429,6 +445,8 @@ void GameClass::Update(float deltaTime)
     {
         m_Ball->Update(deltaTime);
     }
+
+    UpdatePowerUps(deltaTime);
 }
 
 
@@ -524,6 +542,13 @@ void GameClass::Render()
             0
         );
     }
+
+
+    /*
+        Disegno PowerUps
+    */
+
+    RenderPowerUps();
 
 
     /*
@@ -763,6 +788,11 @@ void GameClass::CheckBallBrickCollision()
 
             brick->SetActive(false);
 
+            TrySpawnPowerUp(
+                brick->GetX(),
+                brick->GetY()
+            );
+
             /*
                 Score.
             */
@@ -993,6 +1023,8 @@ void GameClass::StartNewGame()
 
     m_pWasDown = false;
 
+    ShutdownPowerUps();
+
     ShutdownBricks();
     InitializeBricks();
 
@@ -1001,4 +1033,162 @@ void GameClass::StartNewGame()
     m_GameState = GameState::Ready;
 
     UpdateWindowTitle();
+}
+
+void GameClass::ShutdownPowerUps()
+{
+    for (PowerUpClass* powerUp : m_PowerUps)
+    {
+        if (powerUp)
+        {
+            powerUp->Shutdown();
+            delete powerUp;
+        }
+    }
+
+    m_PowerUps.clear();
+}
+
+
+void GameClass::UpdatePowerUps(float deltaTime)
+{
+    for (PowerUpClass* powerUp : m_PowerUps)
+    {
+        if (powerUp && powerUp->IsActive())
+        {
+            powerUp->Update(deltaTime);
+        }
+    }
+}
+
+
+void GameClass::RenderPowerUps()
+{
+    if (!m_D3D || !m_ColorShader)
+    {
+        return;
+    }
+
+    for (PowerUpClass* powerUp : m_PowerUps)
+    {
+        if (powerUp && powerUp->IsActive())
+        {
+            powerUp->Render(m_D3D->GetDeviceContext());
+
+            m_ColorShader->RenderShader(m_D3D->GetDeviceContext());
+
+            m_D3D->GetDeviceContext()->DrawIndexed(
+                powerUp->GetIndexCount(),
+                0,
+                0
+            );
+        }
+    }
+}
+
+
+PowerUpType GameClass::GetRandomPowerUpType() const
+{
+    int randomValue = std::rand() % 3;
+
+    if (randomValue == 0)
+    {
+        return PowerUpType::PaddleGrow;
+    }
+
+    if (randomValue == 1)
+    {
+        return PowerUpType::PaddleShrink;
+    }
+
+    return PowerUpType::BallSpeedUp;
+}
+
+
+void GameClass::TrySpawnPowerUp(float x, float y)
+{
+    if (!m_D3D)
+    {
+        return;
+    }
+
+    /*
+        Drop chance:
+        GameConfig::PowerUpDropChance = 0.05f significa 5%.
+    */
+
+    float randomValue =
+        static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+
+    if (randomValue > GameConfig::PowerUpDropChance)
+    {
+        return;
+    }
+
+    PowerUpClass* powerUp = new PowerUpClass();
+
+    if (!powerUp)
+    {
+        return;
+    }
+
+    PowerUpType type = GetRandomPowerUpType();
+
+    if (!powerUp->Initialize(
+        m_D3D->GetDevice(),
+        x,
+        y,
+        type
+    ))
+    {
+        powerUp->Shutdown();
+        delete powerUp;
+        powerUp = nullptr;
+
+        return;
+    }
+
+    m_PowerUps.push_back(powerUp);
+}
+
+
+void GameClass::CheckPaddlePowerUpCollision()
+{
+    if (!m_Paddle)
+    {
+        return;
+    }
+
+    for (PowerUpClass* powerUp : m_PowerUps)
+    {
+        if (!powerUp || !powerUp->IsActive())
+        {
+            continue;
+        }
+
+        bool isColliding = CheckAABBCollision(
+            m_Paddle->GetLeft(),
+            m_Paddle->GetRight(),
+            m_Paddle->GetTop(),
+            m_Paddle->GetBottom(),
+
+            powerUp->GetLeft(),
+            powerUp->GetRight(),
+            powerUp->GetTop(),
+            powerUp->GetBottom()
+        );
+
+        if (isColliding)
+        {
+            /*
+                Per ora non applichiamo ancora l'effetto.
+                In questo branch ci interessa solo:
+                - spawn
+                - caduta
+                - raccolta
+            */
+
+            powerUp->SetActive(false);
+        }
+    }
 }
