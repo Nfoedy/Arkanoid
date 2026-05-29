@@ -66,7 +66,7 @@ namespace GameConfig
     // PowerUps / Malus - per dopo
     // ============================================================
 
-    constexpr float PowerUpDropChance = 0.15f;
+    constexpr float PowerUpDropChance = 0.20f;
     constexpr float PowerUpFallSpeed = 0.45f;
     constexpr float PowerUpSize = 0.06f;
     constexpr float PowerUpDuration = 6.0f;
