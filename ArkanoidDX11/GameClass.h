@@ -14,6 +14,7 @@
 
 enum class GameState
 {
+    MainMenu,
     Ready,
     Playing,
     Paused,
@@ -68,6 +69,7 @@ private:
     void CheckGameState();
     void ResetGame();
 
+    void StartNewGame();
     void ResetRound();
     void HandleBallLost();
     void UpdateWindowTitle();

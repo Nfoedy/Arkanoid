@@ -22,7 +22,7 @@ GameClass::GameClass()
 
     m_pWasDown = false;
 
-    m_GameState = GameState::Playing;
+    m_GameState = GameState::MainMenu;
 }
 
 
@@ -172,7 +172,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
     m_score = 0;
     m_lives = 3;
 
-    m_GameState = GameState::Ready;
+    m_GameState = GameState::MainMenu;
 
     PositionBallOnPaddle();
 
@@ -278,7 +278,7 @@ bool GameClass::Frame()
         deltaTime = 0.05f;
     }
 
-    // ESC chiude il gioco.
+    // ESC chiude sempre il gioco.
     if (m_Input->IsKeyDown(VK_ESCAPE))
     {
         return false;
@@ -286,10 +286,31 @@ bool GameClass::Frame()
 
 
     /*
+        Main Menu
+
+        Per ora il menu è controllato da tastiera:
+        ENTER = Play
+        ESC   = Exit
+    */
+
+    if (m_GameState == GameState::MainMenu)
+    {
+        if (m_Input->IsKeyDown(VK_RETURN))
+        {
+            StartNewGame();
+        }
+
+        Render();
+
+        return true;
+    }
+
+
+    /*
         Gestione pausa con P.
 
-        Usiamo m_pWasDown per rilevare solo il "colpo singolo"
-        del tasto, non il fatto che sia tenuto premuto.
+        Funziona solo durante Playing e Paused.
+        In Ready non mettiamo in pausa, perché la palla è già ferma.
     */
 
     bool pIsDown = m_Input->IsKeyDown('P');
@@ -311,20 +332,32 @@ bool GameClass::Frame()
     m_pWasDown = pIsDown;
 
 
-    // Restart con R se siamo in Win o Lose.
-    if (m_Input->IsKeyDown('R') && m_GameState != GameState::Playing && m_GameState != GameState::Paused)
+    /*
+        Win / Lose menu
+
+        R = restart
+        ESC = exit, già gestito sopra
+    */
+
+    if (m_Input->IsKeyDown('R') &&
+        (m_GameState == GameState::Win || m_GameState == GameState::Lose))
     {
         ResetGame();
     }
 
+
+    /*
+        Stato Ready
+
+        La palla resta sopra il paddle.
+        Il player può muovere il paddle.
+        SPACE lancia la palla.
+    */
+
     if (m_GameState == GameState::Ready)
     {
-        /*
-            In Ready il paddle può muoversi,
-            e la palla resta agganciata sopra il paddle.
-        */
-
         HandleInput(deltaTime);
+
         PositionBallOnPaddle();
 
         if (m_Input->IsKeyDown(VK_SPACE))
@@ -335,10 +368,13 @@ bool GameClass::Frame()
     else if (m_GameState == GameState::Playing)
     {
         HandleInput(deltaTime);
+
         Update(deltaTime);
 
         CheckPaddleBallCollision();
+
         CheckBallBrickCollision();
+
         CheckGameState();
     }
 
@@ -405,7 +441,12 @@ void GameClass::Render()
         Colore dello sfondo in base allo stato del gioco.
     */
 
-    if (m_GameState == GameState::Ready)
+    if (m_GameState == GameState::MainMenu)
+    {
+        // Nero/blu scuro: main menu.
+        m_D3D->BeginScene(0.02f, 0.02f, 0.08f, 1.0f);
+    }
+    else if (m_GameState == GameState::Ready)
     {
         // Blu più scuro: round pronto, palla ferma sopra il paddle.
         m_D3D->BeginScene(0.08f, 0.08f, 0.30f, 1.0f);
@@ -429,6 +470,18 @@ void GameClass::Render()
     {
         // Rosso: sconfitta.
         m_D3D->BeginScene(0.35f, 0.1f, 0.1f, 1.0f);
+    }
+
+
+    /*
+        Nel Main Menu non disegniamo ancora gli oggetti di gioco.
+        Per ora il menu viene comunicato tramite titolo finestra.
+    */
+
+    if (m_GameState == GameState::MainMenu)
+    {
+        m_D3D->EndScene();
+        return;
     }
 
 
@@ -772,19 +825,7 @@ void GameClass::CheckGameState()
 
 void GameClass::ResetGame()
 {
-    m_GameState = GameState::Ready;
-
-    m_score = 0;
-    m_lives = 3;
-
-    m_pWasDown = false;
-
-    ResetRound();
-
-    ShutdownBricks();
-    InitializeBricks();
-
-    UpdateWindowTitle();
+    StartNewGame();
 }
 
 
@@ -829,6 +870,8 @@ void GameClass::HandleBallLost()
     UpdateWindowTitle();
 }
 
+
+
 void GameClass::UpdateWindowTitle()
 {
     if (!m_hwnd)
@@ -838,11 +881,18 @@ void GameClass::UpdateWindowTitle()
 
     wchar_t title[256];
 
-    if (m_GameState == GameState::Ready)
+    if (m_GameState == GameState::MainMenu)
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | Score: %d | Lives: %d | Press SPACE to launch",
+            L"Arkanoid DX11 | MAIN MENU | ENTER: Play | ESC: Exit"
+        );
+    }
+    else if (m_GameState == GameState::Ready)
+    {
+        swprintf_s(
+            title,
+            L"Arkanoid DX11 | Score: %d | Lives: %d | SPACE: Launch | P: Pause",
             m_score,
             m_lives
         );
@@ -851,7 +901,7 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | Score: %d | Lives: %d",
+            L"Arkanoid DX11 | Score: %d | Lives: %d | P: Pause",
             m_score,
             m_lives
         );
@@ -860,7 +910,7 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | PAUSED | Score: %d | Lives: %d | Press P to resume",
+            L"Arkanoid DX11 | PAUSED | Score: %d | Lives: %d | P: Resume | ESC: Exit",
             m_score,
             m_lives
         );
@@ -869,7 +919,7 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | YOU WIN | Score: %d | Press R to restart",
+            L"Arkanoid DX11 | YOU WIN | Score: %d | R: Restart | ESC: Exit",
             m_score
         );
     }
@@ -877,7 +927,7 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | GAME OVER | Score: %d | Press R to restart",
+            L"Arkanoid DX11 | GAME OVER | Score: %d | R: Restart | ESC: Exit",
             m_score
         );
     }
@@ -930,6 +980,24 @@ void GameClass::LaunchBall()
     );
 
     m_GameState = GameState::Playing;
+
+    UpdateWindowTitle();
+}
+
+
+void GameClass::StartNewGame()
+{
+    m_score = 0;
+    m_lives = 3;
+
+    m_pWasDown = false;
+
+    ShutdownBricks();
+    InitializeBricks();
+
+    ResetRound();
+
+    m_GameState = GameState::Ready;
 
     UpdateWindowTitle();
 }
