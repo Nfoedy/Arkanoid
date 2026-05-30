@@ -27,6 +27,12 @@ GameClass::GameClass()
 
     m_pWasDown = false;
 
+    m_isPaddleSizeEffectActive = false;
+    m_paddleSizeEffectTimer = 0.0f;
+
+    m_isBallSpeedEffectActive = false;
+    m_ballSpeedEffectTimer = 0.0f;
+
     m_GameState = GameState::MainMenu;
 }
 
@@ -447,6 +453,8 @@ void GameClass::Update(float deltaTime)
     }
 
     UpdatePowerUps(deltaTime);
+
+    UpdateActiveEffects(deltaTime);
 }
 
 
@@ -866,6 +874,8 @@ void GameClass::ResetGame()
 
 void GameClass::ResetRound()
 {
+    ResetActiveEffects();
+
     if (m_Paddle)
     {
         m_Paddle->Reset(
@@ -1022,6 +1032,8 @@ void GameClass::StartNewGame()
     m_lives = GameConfig::InitialLives;
 
     m_pWasDown = false;
+
+    ResetActiveEffects();
 
     ShutdownPowerUps();
 
@@ -1180,15 +1192,109 @@ void GameClass::CheckPaddlePowerUpCollision()
 
         if (isColliding)
         {
-            /*
-                Per ora non applichiamo ancora l'effetto.
-                In questo branch ci interessa solo:
-                - spawn
-                - caduta
-                - raccolta
-            */
+            
+            ApplyPowerUp(powerUp->GetType());
 
             powerUp->SetActive(false);
         }
     }
+}
+
+
+void GameClass::ApplyPowerUp(PowerUpType type)
+{
+    if (!m_Paddle || !m_Ball)
+    {
+        return;
+    }
+
+    if (type == PowerUpType::PaddleGrow)
+    {
+        m_Paddle->SetWidth(GameConfig::PaddleGrowWidth);
+
+        m_isPaddleSizeEffectActive = true;
+        m_paddleSizeEffectTimer = GameConfig::PowerUpDuration;
+    }
+    else if (type == PowerUpType::PaddleShrink)
+    {
+        m_Paddle->SetWidth(GameConfig::PaddleShrinkWidth);
+
+        m_isPaddleSizeEffectActive = true;
+        m_paddleSizeEffectTimer = GameConfig::PowerUpDuration;
+    }
+    else if (type == PowerUpType::BallSpeedUp)
+    {
+        /*
+            Se l'effetto è già attivo, non moltiplichiamo di nuovo la velocità.
+            Reset diamo solo il timer.
+        */
+
+        if (!m_isBallSpeedEffectActive)
+        {
+            m_Ball->MultiplyVelocity(GameConfig::BallSpeedMultiplier);
+            m_isBallSpeedEffectActive = true;
+        }
+
+        m_ballSpeedEffectTimer = GameConfig::PowerUpDuration;
+    }
+}
+
+void GameClass::UpdateActiveEffects(float deltaTime)
+{
+    /*
+        Effetto paddle size.
+    */
+
+    if (m_isPaddleSizeEffectActive)
+    {
+        m_paddleSizeEffectTimer -= deltaTime;
+
+        if (m_paddleSizeEffectTimer <= 0.0f)
+        {
+            if (m_Paddle)
+            {
+                m_Paddle->SetWidth(GameConfig::PaddleWidth);
+            }
+
+            m_isPaddleSizeEffectActive = false;
+            m_paddleSizeEffectTimer = 0.0f;
+        }
+    }
+
+
+    /*
+        Effetto ball speed.
+    */
+
+    if (m_isBallSpeedEffectActive)
+    {
+        m_ballSpeedEffectTimer -= deltaTime;
+
+        if (m_ballSpeedEffectTimer <= 0.0f)
+        {
+            if (m_Ball)
+            {
+                m_Ball->MultiplyVelocity(
+                    1.0f / GameConfig::BallSpeedMultiplier
+                );
+            }
+
+            m_isBallSpeedEffectActive = false;
+            m_ballSpeedEffectTimer = 0.0f;
+        }
+    }
+}
+
+void GameClass::ResetActiveEffects()
+{
+    if (m_Paddle)
+    {
+        m_Paddle->SetWidth(GameConfig::PaddleWidth);
+    }
+
+    m_isPaddleSizeEffectActive = false;
+    m_paddleSizeEffectTimer = 0.0f;
+
+    m_isBallSpeedEffectActive = false;
+    m_ballSpeedEffectTimer = 0.0f;
 }

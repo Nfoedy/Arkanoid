@@ -33,6 +33,9 @@ public:
     // Riporta il paddle a una posizione iniziale.
     void Reset(float x, float y);
 
+    // Cambia temporaneamente la larghezza del paddle.
+    void SetWidth(float width);
+
     int GetIndexCount() const;
 
     // Getter per collisioni.
@@ -40,6 +43,7 @@ public:
     float GetRight() const;
     float GetTop() const;
     float GetBottom() const;
+
 
 private:
     // Impedisce al paddle di uscire dallo schermo.

@@ -124,3 +124,14 @@ void PaddleClass::ClampToScreen()
 
     m_Rect.SetPosition(x, y);
 }
+
+
+void PaddleClass::SetWidth(float width)
+{
+    m_Rect.SetSize(
+        width,
+        m_Rect.GetHeight()
+    );
+
+    ClampToScreen();
+}

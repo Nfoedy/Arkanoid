@@ -88,6 +88,10 @@ private:
     PowerUpType GetRandomPowerUpType() const;
 
 
+    void ApplyPowerUp(PowerUpType type);
+    void UpdateActiveEffects(float deltaTime);
+    void ResetActiveEffects();
+
 
 private:
     int m_screenWidth;
@@ -99,6 +103,12 @@ private:
     int m_lives;
 
     bool m_pWasDown;
+
+    bool m_isPaddleSizeEffectActive;
+    float m_paddleSizeEffectTimer;
+
+    bool m_isBallSpeedEffectActive;
+    float m_ballSpeedEffectTimer;
 
     D3DClass* m_D3D;
     InputClass* m_Input;

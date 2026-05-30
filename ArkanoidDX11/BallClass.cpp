@@ -243,3 +243,10 @@ void BallClass::SetVelocity(float velocityX, float velocityY)
     m_velocityX = velocityX;
     m_velocityY = velocityY;
 }
+
+
+void BallClass::MultiplyVelocity(float factor)
+{
+    m_velocityX *= factor;
+    m_velocityY *= factor;
+}

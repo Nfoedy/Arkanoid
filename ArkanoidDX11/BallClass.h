@@ -55,6 +55,9 @@ public:
     // Imposta solo la velocità della palla.
     void SetVelocity(float velocityX, float velocityY);
 
+    // Moltiplica la velocità attuale della palla. Utile per malus tipo palla più veloce.
+    void MultiplyVelocity(float factor);
+
 private:
     void CheckWallCollision();
 

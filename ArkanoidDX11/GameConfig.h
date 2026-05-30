@@ -63,11 +63,16 @@ namespace GameConfig
 
 
     // ============================================================
-    // PowerUps / Malus - per dopo
+    // PowerUps / Malus
     // ============================================================
 
-    constexpr float PowerUpDropChance = 0.20f;
+    constexpr float PowerUpDropChance = 0.05f;
     constexpr float PowerUpFallSpeed = 0.45f;
     constexpr float PowerUpSize = 0.06f;
     constexpr float PowerUpDuration = 6.0f;
+
+    constexpr float PaddleGrowWidth = 0.55f;
+    constexpr float PaddleShrinkWidth = 0.22f;
+
+    constexpr float BallSpeedMultiplier = 1.35f;
 }
