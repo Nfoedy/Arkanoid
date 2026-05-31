@@ -21,7 +21,7 @@ namespace GameConfig
     constexpr float PaddleWidth = 0.35f;
     constexpr float PaddleHeight = 0.08f;
 
-    constexpr float PaddleSpeed = 1.2f;
+    constexpr float PaddleSpeed = 1.25f;
 
 
     // ============================================================
@@ -30,11 +30,12 @@ namespace GameConfig
 
     constexpr float BallSize = 0.06f;
 
-    constexpr float BallInitialVelocityX = 0.6f;
-    constexpr float BallInitialVelocityY = 0.72f;
+    constexpr float BallInitialVelocityX = 0.60f;
+    constexpr float BallInitialVelocityY = 0.78f;
 
-    constexpr float BallMaxHorizontalSpeed = 0.75f;
-    constexpr float BallMinHorizontalSpeed = 0.20f;
+    constexpr float BallMaxHorizontalSpeed = 0.78f;
+    constexpr float BallMinHorizontalSpeed = 0.22f;
+
 
 
     // ============================================================
@@ -67,12 +68,12 @@ namespace GameConfig
     // ============================================================
 
     constexpr float PowerUpDropChance = 0.20f;
-    constexpr float PowerUpFallSpeed = 0.45f;
+    constexpr float PowerUpFallSpeed = 0.6f;
     constexpr float PowerUpSize = 0.06f;
     constexpr float PowerUpDuration = 6.0f;
 
     constexpr float PaddleGrowWidth = 0.55f;
-    constexpr float PaddleShrinkWidth = 0.22f;
+    constexpr float PaddleShrinkWidth = 0.24f;
 
     constexpr float BallSpeedMultiplier = 1.5f;
 }
