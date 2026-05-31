@@ -21,6 +21,9 @@ TextRendererClass::TextRendererClass()
     m_whiteBrush = nullptr;
     m_yellowBrush = nullptr;
     m_grayBrush = nullptr;
+
+    m_hudLeftFormat = nullptr;
+    m_hudRightFormat = nullptr;
 }
 
 
@@ -170,6 +173,38 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
         return false;
     }
 
+    result = m_dwriteFactory->CreateTextFormat(
+        L"Bahnschrift",
+        nullptr,
+        DWRITE_FONT_WEIGHT_BOLD,
+        DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        22.0f,
+        L"en-us",
+        &m_hudLeftFormat
+    );
+
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    result = m_dwriteFactory->CreateTextFormat(
+        L"Bahnschrift",
+        nullptr,
+        DWRITE_FONT_WEIGHT_BOLD,
+        DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        22.0f,
+        L"en-us",
+        &m_hudRightFormat
+    );
+
+    if (FAILED(result))
+    {
+        return false;
+    }
+
 
     /*
         6. Allineamento testo.
@@ -184,6 +219,11 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
     m_smallFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
     m_smallFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
+    m_hudLeftFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+    m_hudLeftFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
+    m_hudRightFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+    m_hudRightFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
     /*
         7. Pennelli colore.
@@ -241,6 +281,18 @@ void TextRendererClass::Shutdown()
     {
         m_whiteBrush->Release();
         m_whiteBrush = nullptr;
+    }
+
+    if (m_hudRightFormat)
+    {
+        m_hudRightFormat->Release();
+        m_hudRightFormat = nullptr;
+    }
+
+    if (m_hudLeftFormat)
+    {
+        m_hudLeftFormat->Release();
+        m_hudLeftFormat = nullptr;
     }
 
     if (m_smallFormat)
@@ -393,5 +445,46 @@ void TextRendererClass::DrawTextLine(
         format,
         textRect,
         brush
+    );
+}
+
+void TextRendererClass::DrawBottomLeftText(const wchar_t* text)
+{
+    if (!m_renderTarget)
+    {
+        return;
+    }
+
+    D2D1_SIZE_F size = m_renderTarget->GetSize();
+
+    DrawTextLine(
+        text,
+        20.0f,
+        size.height - 45.0f,
+        300.0f,
+        35.0f,
+        m_hudLeftFormat,
+        m_whiteBrush
+    );
+}
+
+
+void TextRendererClass::DrawBottomRightText(const wchar_t* text)
+{
+    if (!m_renderTarget)
+    {
+        return;
+    }
+
+    D2D1_SIZE_F size = m_renderTarget->GetSize();
+
+    DrawTextLine(
+        text,
+        size.width - 320.0f,
+        size.height - 45.0f,
+        300.0f,
+        35.0f,
+        m_hudRightFormat,
+        m_whiteBrush
     );
 }

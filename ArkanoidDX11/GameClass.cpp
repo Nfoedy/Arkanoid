@@ -1577,6 +1577,42 @@ void GameClass::RenderTextUI()
         );
     }
 
+
+    /*
+        HUD di gioco.
+
+        Lo mostriamo durante:
+        - Ready
+        - Playing
+        - Paused
+
+        Non lo mostriamo nel Main Menu.
+        Nei menu Win/Lose per ora abbiamo già il messaggio centrale.
+    */
+
+    if (m_GameState == GameState::Ready ||
+        m_GameState == GameState::Playing ||
+        m_GameState == GameState::Paused)
+    {
+        wchar_t scoreText[64];
+        wchar_t livesText[64];
+
+        swprintf_s(
+            scoreText,
+            L"Score: %d",
+            m_score
+        );
+
+        swprintf_s(
+            livesText,
+            L"Lives: %d",
+            m_lives
+        );
+
+        m_TextRenderer->DrawBottomLeftText(scoreText);
+        m_TextRenderer->DrawBottomRightText(livesText);
+    }
+
     m_TextRenderer->EndDraw();
 }
 

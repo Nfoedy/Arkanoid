@@ -26,6 +26,13 @@ public:
     void DrawMenuItem(const wchar_t* text, float y, bool selected);
     void DrawSmallText(const wchar_t* text, float y);
 
+
+    // Disegna testo HUD in basso a sinistra.
+    void DrawBottomLeftText(const wchar_t* text);
+
+    // Disegna testo HUD in basso a destra.
+    void DrawBottomRightText(const wchar_t* text);
+
 private:
     void DrawTextLine(
         const wchar_t* text,
@@ -50,4 +57,7 @@ private:
     ID2D1SolidColorBrush* m_whiteBrush;
     ID2D1SolidColorBrush* m_yellowBrush;
     ID2D1SolidColorBrush* m_grayBrush;
+
+    IDWriteTextFormat* m_hudLeftFormat;
+    IDWriteTextFormat* m_hudRightFormat;
 };
