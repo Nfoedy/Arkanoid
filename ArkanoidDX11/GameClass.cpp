@@ -35,6 +35,12 @@ GameClass::GameClass()
     m_isBallSpeedEffectActive = false;
     m_ballSpeedEffectTimer = 0.0f;
 
+    m_menuSelectedIndex = 0;
+
+    m_upWasDown = false;
+    m_downWasDown = false;
+    m_enterWasDown = false;
+
     m_GameState = GameState::MainMenu;
 }
 
@@ -349,9 +355,9 @@ bool GameClass::Frame()
 
     if (m_GameState == GameState::MainMenu)
     {
-        if (m_Input->IsKeyDown(VK_RETURN))
+        if (!HandleMainMenuInput())
         {
-            StartNewGame();
+            return false;
         }
 
         Render();
@@ -1083,6 +1089,7 @@ void GameClass::StartNewGame()
     UpdateWindowTitle();
 }
 
+
 void GameClass::ShutdownPowerUps()
 {
     for (PowerUpClass* powerUp : m_PowerUps)
@@ -1339,6 +1346,7 @@ void GameClass::UpdateActiveEffects(float deltaTime)
     }
 }
 
+
 void GameClass::ResetActiveEffects()
 {
     if (m_Paddle)
@@ -1378,17 +1386,17 @@ void GameClass::RenderTextUI()
         m_TextRenderer->DrawMenuItem(
             L"START GAME",
             250.0f,
-            true
+            m_menuSelectedIndex == 0
         );
 
         m_TextRenderer->DrawMenuItem(
             L"QUIT",
             315.0f,
-            false
+            m_menuSelectedIndex == 1
         );
 
         m_TextRenderer->DrawSmallText(
-            L"Press ENTER to start - ESC to quit",
+            L"UP/DOWN to select - ENTER to confirm - ESC to quit",
             420.0f
         );
     }
@@ -1437,4 +1445,73 @@ void GameClass::RenderTextUI()
     }
 
     m_TextRenderer->EndDraw();
+}
+
+
+bool GameClass::HandleMainMenuInput()
+{
+    if (!m_Input)
+    {
+        return true;
+    }
+
+    bool upIsDown =
+        m_Input->IsKeyDown(VK_UP) ||
+        m_Input->IsKeyDown('W');
+
+    bool downIsDown =
+        m_Input->IsKeyDown(VK_DOWN) ||
+        m_Input->IsKeyDown('S');
+
+    bool enterIsDown =
+        m_Input->IsKeyDown(VK_RETURN);
+
+
+    /*
+        Cambio selezione.
+
+        Siccome abbiamo solo due voci:
+        - START GAME
+        - QUIT
+
+        basta invertire 0 e 1.
+    */
+
+    if ((upIsDown && !m_upWasDown) ||
+        (downIsDown && !m_downWasDown))
+    {
+        if (m_menuSelectedIndex == 0)
+        {
+            m_menuSelectedIndex = 1;
+        }
+        else
+        {
+            m_menuSelectedIndex = 0;
+        }
+    }
+
+
+    /*
+        Conferma con ENTER.
+    */
+
+    if (enterIsDown && !m_enterWasDown)
+    {
+        if (m_menuSelectedIndex == 0)
+        {
+            // START GAME
+            StartNewGame();
+        }
+        else
+        {
+            // QUIT
+            return false;
+        }
+    }
+
+    m_upWasDown = upIsDown;
+    m_downWasDown = downIsDown;
+    m_enterWasDown = enterIsDown;
+
+    return true;
 }

@@ -95,6 +95,8 @@ private:
 
     void RenderTextUI();
 
+    bool HandleMainMenuInput();
+
 
 private:
     int m_screenWidth;
@@ -112,6 +114,12 @@ private:
 
     bool m_isBallSpeedEffectActive;
     float m_ballSpeedEffectTimer;
+
+    int m_menuSelectedIndex;
+
+    bool m_upWasDown;
+    bool m_downWasDown;
+    bool m_enterWasDown;
 
     D3DClass* m_D3D;
     InputClass* m_Input;
