@@ -761,25 +761,101 @@ void GameClass::CheckPaddleBallCollision()
         m_Ball->GetBottom()
     );
 
-    if (isColliding && m_Ball->IsMovingDown())
+    if (!isColliding)
     {
-        float paddleCenter =
-            (m_Paddle->GetLeft() + m_Paddle->GetRight()) * 0.5f;
+        return;
+    }
 
-        float paddleHalfWidth =
-            (m_Paddle->GetRight() - m_Paddle->GetLeft()) * 0.5f;
+    /*
+        Calcoliamo centro e dimensioni della palla.
+    */
 
-        float ballCenter =
-            (m_Ball->GetLeft() + m_Ball->GetRight()) * 0.5f;
+    float ballCenterX =
+        (m_Ball->GetLeft() + m_Ball->GetRight()) * 0.5f;
 
+    float ballCenterY =
+        (m_Ball->GetTop() + m_Ball->GetBottom()) * 0.5f;
+
+    float ballRadius =
+        (m_Ball->GetRight() - m_Ball->GetLeft()) * 0.5f;
+
+
+    /*
+        Calcoliamo centro del paddle.
+    */
+
+    float paddleCenterX =
+        (m_Paddle->GetLeft() + m_Paddle->GetRight()) * 0.5f;
+
+    float paddleHalfWidth =
+        (m_Paddle->GetRight() - m_Paddle->GetLeft()) * 0.5f;
+
+
+    /*
+        CASO 1:
+        Collisione corretta sopra il paddle.
+
+        La consideriamo collisione superiore solo se:
+        - la palla sta scendendo
+        - il centro della palla è sopra il top del paddle
+        - il centro della palla è compreso orizzontalmente nel paddle
+
+        Questo evita il teletrasporto quando il paddle colpisce la palla di lato.
+    */
+
+    bool ballCenterInsidePaddleX =
+        ballCenterX >= m_Paddle->GetLeft() &&
+        ballCenterX <= m_Paddle->GetRight();
+
+    bool ballCenterAbovePaddleTop =
+        ballCenterY >= m_Paddle->GetTop();
+
+    if (m_Ball->IsMovingDown() &&
+        ballCenterInsidePaddleX &&
+        ballCenterAbovePaddleTop)
+    {
         float hitFactor =
-            (ballCenter - paddleCenter) / paddleHalfWidth;
+            (ballCenterX - paddleCenterX) / paddleHalfWidth;
 
         m_Ball->BounceFromPaddle(
             m_Paddle->GetTop(),
             hitFactor
         );
+
+        return;
     }
+
+
+    /*
+        CASO 2:
+        Collisione laterale.
+
+        Qui NON usiamo BounceFromPaddle(), perché quella funzione
+        sposta la palla sopra il paddle.
+
+        Invece:
+        - spostiamo la palla fuori dal lato colpito
+        - invertiamo la velocità X
+    */
+
+    if (ballCenterX < paddleCenterX)
+    {
+        // La palla è sul lato sinistro del paddle.
+        m_Ball->SetPosition(
+            m_Paddle->GetLeft() - ballRadius,
+            ballCenterY
+        );
+    }
+    else
+    {
+        // La palla è sul lato destro del paddle.
+        m_Ball->SetPosition(
+            m_Paddle->GetRight() + ballRadius,
+            ballCenterY
+        );
+    }
+
+    m_Ball->BounceX();
 }
 
 
