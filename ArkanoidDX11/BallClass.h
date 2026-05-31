@@ -58,6 +58,11 @@ public:
     // Moltiplica la velocità attuale della palla. Utile per malus tipo palla più veloce.
     void MultiplyVelocity(float factor);
 
+    // Imposta un moltiplicatore di velocità.
+    // 1.0f = velocità normale.
+    // > 1.0f = palla più veloce.
+    void SetSpeedMultiplier(float multiplier);
+
 private:
     void CheckWallCollision();
 
@@ -68,4 +73,6 @@ private:
 
     float m_velocityX;
     float m_velocityY;
+
+    float m_speedMultiplier;
 };

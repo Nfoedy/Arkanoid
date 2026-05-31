@@ -8,6 +8,8 @@ BallClass::BallClass()
 
     m_velocityX = GameConfig::BallInitialVelocityX;
     m_velocityY = GameConfig::BallInitialVelocityY;
+
+    m_speedMultiplier = 1.0f;
 }
 
 
@@ -49,8 +51,8 @@ void BallClass::Update(float deltaTime)
     float x = m_Rect.GetX();
     float y = m_Rect.GetY();
 
-    x += m_velocityX * deltaTime;
-    y += m_velocityY * deltaTime;
+    x += m_velocityX * m_speedMultiplier * deltaTime;
+    y += m_velocityY * m_speedMultiplier * deltaTime;
 
     m_Rect.SetPosition(x, y);
 
@@ -249,4 +251,9 @@ void BallClass::MultiplyVelocity(float factor)
 {
     m_velocityX *= factor;
     m_velocityY *= factor;
+}
+
+void BallClass::SetSpeedMultiplier(float multiplier)
+{
+    m_speedMultiplier = multiplier;
 }

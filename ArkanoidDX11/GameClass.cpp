@@ -1208,6 +1208,10 @@ void GameClass::ApplyPowerUp(PowerUpType type)
         return;
     }
 
+    /*
+        Bonus: paddle più lungo.
+    */
+
     if (type == PowerUpType::PaddleGrow)
     {
         m_Paddle->SetWidth(GameConfig::PaddleGrowWidth);
@@ -1215,6 +1219,11 @@ void GameClass::ApplyPowerUp(PowerUpType type)
         m_isPaddleSizeEffectActive = true;
         m_paddleSizeEffectTimer = GameConfig::PowerUpDuration;
     }
+
+    /*
+        Malus: paddle più piccolo.
+    */
+
     else if (type == PowerUpType::PaddleShrink)
     {
         m_Paddle->SetWidth(GameConfig::PaddleShrinkWidth);
@@ -1222,19 +1231,16 @@ void GameClass::ApplyPowerUp(PowerUpType type)
         m_isPaddleSizeEffectActive = true;
         m_paddleSizeEffectTimer = GameConfig::PowerUpDuration;
     }
+
+    /*
+        Malus: palla più veloce.
+    */
+
     else if (type == PowerUpType::BallSpeedUp)
     {
-        /*
-            Se l'effetto è già attivo, non moltiplichiamo di nuovo la velocità.
-            Reset diamo solo il timer.
-        */
+        m_Ball->SetSpeedMultiplier(GameConfig::BallSpeedMultiplier);
 
-        if (!m_isBallSpeedEffectActive)
-        {
-            m_Ball->MultiplyVelocity(GameConfig::BallSpeedMultiplier);
-            m_isBallSpeedEffectActive = true;
-        }
-
+        m_isBallSpeedEffectActive = true;
         m_ballSpeedEffectTimer = GameConfig::PowerUpDuration;
     }
 }
@@ -1242,7 +1248,7 @@ void GameClass::ApplyPowerUp(PowerUpType type)
 void GameClass::UpdateActiveEffects(float deltaTime)
 {
     /*
-        Effetto paddle size.
+        Effetto temporaneo sulla dimensione del paddle.
     */
 
     if (m_isPaddleSizeEffectActive)
@@ -1263,7 +1269,7 @@ void GameClass::UpdateActiveEffects(float deltaTime)
 
 
     /*
-        Effetto ball speed.
+        Effetto temporaneo sulla velocità della palla.
     */
 
     if (m_isBallSpeedEffectActive)
@@ -1274,9 +1280,7 @@ void GameClass::UpdateActiveEffects(float deltaTime)
         {
             if (m_Ball)
             {
-                m_Ball->MultiplyVelocity(
-                    1.0f / GameConfig::BallSpeedMultiplier
-                );
+                m_Ball->SetSpeedMultiplier(1.0f);
             }
 
             m_isBallSpeedEffectActive = false;
@@ -1290,6 +1294,11 @@ void GameClass::ResetActiveEffects()
     if (m_Paddle)
     {
         m_Paddle->SetWidth(GameConfig::PaddleWidth);
+    }
+
+    if (m_Ball)
+    {
+        m_Ball->SetSpeedMultiplier(1.0f);
     }
 
     m_isPaddleSizeEffectActive = false;
