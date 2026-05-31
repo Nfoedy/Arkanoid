@@ -1064,11 +1064,38 @@ void GameClass::ShutdownPowerUps()
 
 void GameClass::UpdatePowerUps(float deltaTime)
 {
-    for (PowerUpClass* powerUp : m_PowerUps)
+    for (auto it = m_PowerUps.begin(); it != m_PowerUps.end(); )
     {
-        if (powerUp && powerUp->IsActive())
+        PowerUpClass* powerUp = *it;
+
+        if (!powerUp)
+        {
+            it = m_PowerUps.erase(it);
+            continue;
+        }
+
+        if (powerUp->IsActive())
         {
             powerUp->Update(deltaTime);
+        }
+
+        /*
+            Dopo l'update, il powerup potrebbe essere diventato inattivo:
+            - raccolto dal paddle
+            - uscito sotto lo schermo
+        */
+
+        if (!powerUp->IsActive())
+        {
+            powerUp->Shutdown();
+            delete powerUp;
+            powerUp = nullptr;
+
+            it = m_PowerUps.erase(it);
+        }
+        else
+        {
+            ++it;
         }
     }
 }
@@ -1208,10 +1235,6 @@ void GameClass::ApplyPowerUp(PowerUpType type)
         return;
     }
 
-    /*
-        Bonus: paddle più lungo.
-    */
-
     if (type == PowerUpType::PaddleGrow)
     {
         m_Paddle->SetWidth(GameConfig::PaddleGrowWidth);
@@ -1219,11 +1242,6 @@ void GameClass::ApplyPowerUp(PowerUpType type)
         m_isPaddleSizeEffectActive = true;
         m_paddleSizeEffectTimer = GameConfig::PowerUpDuration;
     }
-
-    /*
-        Malus: paddle più piccolo.
-    */
-
     else if (type == PowerUpType::PaddleShrink)
     {
         m_Paddle->SetWidth(GameConfig::PaddleShrinkWidth);
@@ -1231,11 +1249,6 @@ void GameClass::ApplyPowerUp(PowerUpType type)
         m_isPaddleSizeEffectActive = true;
         m_paddleSizeEffectTimer = GameConfig::PowerUpDuration;
     }
-
-    /*
-        Malus: palla più veloce.
-    */
-
     else if (type == PowerUpType::BallSpeedUp)
     {
         m_Ball->SetSpeedMultiplier(GameConfig::BallSpeedMultiplier);
@@ -1244,6 +1257,7 @@ void GameClass::ApplyPowerUp(PowerUpType type)
         m_ballSpeedEffectTimer = GameConfig::PowerUpDuration;
     }
 }
+
 
 void GameClass::UpdateActiveEffects(float deltaTime)
 {

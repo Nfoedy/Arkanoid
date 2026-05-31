@@ -74,5 +74,5 @@ namespace GameConfig
     constexpr float PaddleGrowWidth = 0.55f;
     constexpr float PaddleShrinkWidth = 0.22f;
 
-    constexpr float BallSpeedMultiplier = 1.35f;
+    constexpr float BallSpeedMultiplier = 1.5f;
 }
