@@ -48,6 +48,15 @@
     <ClCompile Include="RectObject2D.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="PowerUpClass.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="TextRendererClass.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="CircleObject2D.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3DClass.h">
@@ -81,6 +90,15 @@
       <Filter>File di origine</Filter>
     </ClInclude>
     <ClInclude Include="GameConfig.h">
+      <Filter>File di origine</Filter>
+    </ClInclude>
+    <ClInclude Include="PowerUpClass.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="TextRendererClass.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="CircleObject2D.h">
       <Filter>File di origine</Filter>
     </ClInclude>
   </ItemGroup>

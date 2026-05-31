@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="BallClass.cpp" />
     <ClCompile Include="BrickClass.cpp" />
+    <ClCompile Include="CircleObject2D.cpp" />
     <ClCompile Include="ColorShaderClass.cpp" />
     <ClCompile Include="D3DClass.cpp" />
     <ClCompile Include="GameClass.cpp" />
@@ -156,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="BallClass.h" />
     <ClInclude Include="BrickClass.h" />
+    <ClInclude Include="CircleObject2D.h" />
     <ClInclude Include="ColorShaderClass.h" />
     <ClInclude Include="D3DClass.h" />
     <ClInclude Include="GameClass.h" />

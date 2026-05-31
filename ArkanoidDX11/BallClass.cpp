@@ -27,34 +27,34 @@ bool BallClass::Initialize(
 {
     m_size = size;
 
-    return m_Rect.Initialize(
+    return m_Circle.Initialize(
         device,
         x,
         y,
-        size,
-        size,
+        size * 0.5f,
         1.0f,
         0.9f,
-        0.2f
+        0.2f,
+        32
     );
 }
 
 
 void BallClass::Shutdown()
 {
-    m_Rect.Shutdown();
+    m_Circle.Shutdown();
 }
 
 
 void BallClass::Update(float deltaTime)
 {
-    float x = m_Rect.GetX();
-    float y = m_Rect.GetY();
+    float x = m_Circle.GetX();
+    float y = m_Circle.GetY();
 
     x += m_velocityX * m_speedMultiplier * deltaTime;
     y += m_velocityY * m_speedMultiplier * deltaTime;
 
-    m_Rect.SetPosition(x, y);
+    m_Circle.SetPosition(x, y);
 
     CheckWallCollision();
 }
@@ -62,19 +62,19 @@ void BallClass::Update(float deltaTime)
 
 void BallClass::Render(ID3D11DeviceContext* deviceContext)
 {
-    m_Rect.Render(deviceContext);
+    m_Circle.Render(deviceContext);
 }
 
 
 int BallClass::GetIndexCount() const
 {
-    return m_Rect.GetIndexCount();
+    return m_Circle.GetIndexCount();
 }
 
 
 void BallClass::Reset(float x, float y, float velocityX, float velocityY)
 {
-    m_Rect.SetPosition(x, y);
+    m_Circle.SetPosition(x, y);
 
     m_velocityX = velocityX;
     m_velocityY = velocityY;
@@ -89,25 +89,25 @@ bool BallClass::IsBelowBottom() const
 
 float BallClass::GetLeft() const
 {
-    return m_Rect.GetLeft();
+    return m_Circle.GetLeft();
 }
 
 
 float BallClass::GetRight() const
 {
-    return m_Rect.GetRight();
+    return m_Circle.GetRight();
 }
 
 
 float BallClass::GetTop() const
 {
-    return m_Rect.GetTop();
+    return m_Circle.GetTop();
 }
 
 
 float BallClass::GetBottom() const
 {
-    return m_Rect.GetBottom();
+    return m_Circle.GetBottom();
 }
 
 
@@ -124,8 +124,8 @@ void BallClass::BounceFromPaddle(float paddleTop, float hitFactor)
         Questo evita che rimanga incastrata dentro il paddle.
     */
 
-    m_Rect.SetPosition(
-        m_Rect.GetX(),
+    m_Circle.SetPosition(
+        m_Circle.GetX(),
         paddleTop + (m_size * 0.5f)
     );
 
@@ -202,8 +202,8 @@ void BallClass::CheckWallCollision()
 {
     float halfSize = m_size * 0.5f;
 
-    float x = m_Rect.GetX();
-    float y = m_Rect.GetY();
+    float x = m_Circle.GetX();
+    float y = m_Circle.GetY();
 
     // Bordo sinistro.
     if (x - halfSize < -1.0f)
@@ -230,13 +230,13 @@ void BallClass::CheckWallCollision()
     // non rimbalziamo più.
     // La sconfitta viene gestita da GameClass.
 
-    m_Rect.SetPosition(x, y);
+    m_Circle.SetPosition(x, y);
 }
 
 
 void BallClass::SetPosition(float x, float y)
 {
-    m_Rect.SetPosition(x, y);
+    m_Circle.SetPosition(x, y);
 }
 
 

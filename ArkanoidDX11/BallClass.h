@@ -2,7 +2,7 @@
 
 #include <d3d11.h>
 
-#include "RectObject2D.h"
+#include "CircleObject2D.h"
 
 
 class BallClass
@@ -67,7 +67,8 @@ private:
     void CheckWallCollision();
 
 private:
-    RectObject2D m_Rect;
+
+    CircleObject2D m_Circle;
 
     float m_size;
 
