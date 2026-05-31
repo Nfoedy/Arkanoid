@@ -11,6 +11,7 @@
 #include "BrickClass.h"
 #include "TimerClass.h"
 #include "PowerUpClass.h"
+#include "TextRendererClass.h"
 
 
 enum class GameState
@@ -92,6 +93,8 @@ private:
     void UpdateActiveEffects(float deltaTime);
     void ResetActiveEffects();
 
+    void RenderTextUI();
+
 
 private:
     int m_screenWidth;
@@ -118,6 +121,8 @@ private:
     BallClass* m_Ball;
 
     TimerClass* m_Timer;
+
+    TextRendererClass* m_TextRenderer;
 
     std::vector<BrickClass*> m_Bricks;
 

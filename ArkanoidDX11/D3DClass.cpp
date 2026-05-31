@@ -34,8 +34,8 @@ bool D3DClass::Initialize(HWND hwnd, int width, int height)
     swapChainDesc.BufferDesc.Width = width;
     swapChainDesc.BufferDesc.Height = height;
 
-    // Formato colore: R8G8B8A8 = 8 bit per Red, Green, Blue, Alpha
-    swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    // Usiamo BGRA perché Direct2D richiede il supporto BGRA per disegnare sul back buffer.
+    swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
     // Refresh rate, per ora 60 Hz
     swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
@@ -62,6 +62,9 @@ bool D3DClass::Initialize(HWND hwnd, int width, int height)
     // DISCARD significa che dopo Present il contenuto del back buffer può essere scartato
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
+    // Necessario per permettere a Direct2D di disegnare sopra il back buffer DirectX.
+    unsigned int createDeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+
 
     // 2. Creazione Device, DeviceContext e SwapChain
 
@@ -69,7 +72,7 @@ bool D3DClass::Initialize(HWND hwnd, int width, int height)
         nullptr,                    // GPU di default
         D3D_DRIVER_TYPE_HARDWARE,   // usa la GPU hardware
         nullptr,                    // software rasterizer non usato
-        0,                          // flag, per ora nessuno
+        createDeviceFlags,                          // flag, per ora nessuno
         nullptr,                    // feature levels automatici
         0,                          // numero feature levels
         D3D11_SDK_VERSION,          // versione SDK
@@ -217,4 +220,9 @@ ID3D11Device* D3DClass::GetDevice()
 ID3D11DeviceContext* D3DClass::GetDeviceContext()
 {
     return m_deviceContext;
+}
+
+IDXGISwapChain* D3DClass::GetSwapChain()
+{
+    return m_swapChain;
 }

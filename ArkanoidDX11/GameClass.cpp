@@ -27,6 +27,8 @@ GameClass::GameClass()
 
     m_pWasDown = false;
 
+    m_TextRenderer = nullptr;
+
     m_isPaddleSizeEffectActive = false;
     m_paddleSizeEffectTimer = 0.0f;
 
@@ -95,6 +97,25 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
     if (!m_D3D->Initialize(hwnd, width, height))
     {
         MessageBox(nullptr, L"Errore inizializzazione DirectX!", L"Errore", MB_OK);
+        Shutdown();
+        return false;
+    }
+
+    /*
+        Inizializzazione Text Renderer
+    */
+
+    m_TextRenderer = new TextRendererClass();
+
+    if (!m_TextRenderer)
+    {
+        Shutdown();
+        return false;
+    }
+
+    if (!m_TextRenderer->Initialize(m_D3D->GetSwapChain()))
+    {
+        MessageBox(nullptr, L"Errore inizializzazione TextRendererClass!", L"Errore", MB_OK);
         Shutdown();
         return false;
     }
@@ -245,6 +266,17 @@ void GameClass::Shutdown()
         m_ColorShader->Shutdown();
         delete m_ColorShader;
         m_ColorShader = nullptr;
+    }
+
+    /*
+        Shutdown Text Renderer
+    */
+
+    if (m_TextRenderer)
+    {
+        m_TextRenderer->Shutdown();
+        delete m_TextRenderer;
+        m_TextRenderer = nullptr;
     }
 
 
@@ -508,6 +540,8 @@ void GameClass::Render()
 
     if (m_GameState == GameState::MainMenu)
     {
+        RenderTextUI();
+
         m_D3D->EndScene();
         return;
     }
@@ -575,6 +609,8 @@ void GameClass::Render()
             0
         );
     }
+
+    RenderTextUI();
 
     m_D3D->EndScene();
 }
@@ -1320,4 +1356,85 @@ void GameClass::ResetActiveEffects()
 
     m_isBallSpeedEffectActive = false;
     m_ballSpeedEffectTimer = 0.0f;
+}
+
+
+void GameClass::RenderTextUI()
+{
+    if (!m_TextRenderer)
+    {
+        return;
+    }
+
+    m_TextRenderer->BeginDraw();
+
+    if (m_GameState == GameState::MainMenu)
+    {
+        m_TextRenderer->DrawTitle(
+            L"ARKANOID DX11",
+            90.0f
+        );
+
+        m_TextRenderer->DrawMenuItem(
+            L"START GAME",
+            250.0f,
+            true
+        );
+
+        m_TextRenderer->DrawMenuItem(
+            L"QUIT",
+            315.0f,
+            false
+        );
+
+        m_TextRenderer->DrawSmallText(
+            L"Press ENTER to start - ESC to quit",
+            420.0f
+        );
+    }
+    else if (m_GameState == GameState::Ready)
+    {
+        m_TextRenderer->DrawSmallText(
+            L"SPACE to launch",
+            545.0f
+        );
+    }
+    else if (m_GameState == GameState::Paused)
+    {
+        m_TextRenderer->DrawTitle(
+            L"PAUSED",
+            160.0f
+        );
+
+        m_TextRenderer->DrawSmallText(
+            L"P to resume - ESC to quit",
+            280.0f
+        );
+    }
+    else if (m_GameState == GameState::Win)
+    {
+        m_TextRenderer->DrawTitle(
+            L"YOU WIN",
+            160.0f
+        );
+
+        m_TextRenderer->DrawSmallText(
+            L"R to restart - ESC to quit",
+            280.0f
+        );
+    }
+    else if (m_GameState == GameState::Lose)
+    {
+        m_TextRenderer->DrawTitle(
+            L"GAME OVER",
+            160.0f
+        );
+
+        m_TextRenderer->DrawSmallText(
+            L"R to restart - ESC to quit",
+            280.0f
+        );
+    }
+
+    m_TextRenderer->EndDraw();
 }

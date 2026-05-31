@@ -27,6 +27,8 @@ public:
     // Ritorna il device context, serve per mandare comandi alla GPU
     ID3D11DeviceContext* GetDeviceContext();
 
+    IDXGISwapChain* GetSwapChain();
+
 
 private:
     // Device = oggetto principale per creare risorse DirectX

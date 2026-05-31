@@ -150,6 +150,7 @@
     <ClCompile Include="PowerUpClass.cpp" />
     <ClCompile Include="QuadClass..cpp" />
     <ClCompile Include="RectObject2D.cpp" />
+    <ClCompile Include="TextRendererClass.cpp" />
     <ClCompile Include="TimerClass.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +165,7 @@
     <ClInclude Include="PowerUpClass.h" />
     <ClInclude Include="QuadClass.h" />
     <ClInclude Include="RectObject2D.h" />
+    <ClInclude Include="TextRendererClass.h" />
     <ClInclude Include="TimerClass.h" />
   </ItemGroup>
   <ItemGroup>
