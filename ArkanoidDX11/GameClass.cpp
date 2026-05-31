@@ -353,9 +353,9 @@ bool GameClass::Frame()
         ESC   = Exit
     */
 
-    if (m_GameState == GameState::MainMenu)
+    if (IsMenuState())
     {
-        if (!HandleMainMenuInput())
+        if (!HandleMenuInput())
         {
             return false;
         }
@@ -380,6 +380,13 @@ bool GameClass::Frame()
         if (m_GameState == GameState::Playing)
         {
             m_GameState = GameState::Paused;
+
+            m_menuSelectedIndex = 0;
+
+            m_upWasDown = false;
+            m_downWasDown = false;
+            m_enterWasDown = false;
+
             UpdateWindowTitle();
         }
         else if (m_GameState == GameState::Paused)
@@ -902,7 +909,15 @@ void GameClass::CheckGameState()
     if (AreAllBricksDestroyed())
     {
         m_GameState = GameState::Win;
+
+        m_menuSelectedIndex = 0;
+
+        m_upWasDown = false;
+        m_downWasDown = false;
+        m_enterWasDown = false;
+
         UpdateWindowTitle();
+
         return;
     }
 }
@@ -946,7 +961,15 @@ void GameClass::HandleBallLost()
     {
         m_lives = 0;
         m_GameState = GameState::Lose;
+
+        m_menuSelectedIndex = 0;
+
+        m_upWasDown = false;
+        m_downWasDown = false;
+        m_enterWasDown = false;
+
         UpdateWindowTitle();
+
         return;
     }
 
@@ -971,14 +994,14 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | MAIN MENU | ENTER: Play | ESC: Exit"
+            L"Arkanoid DX11 | Main Menu"
         );
     }
     else if (m_GameState == GameState::Ready)
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | Score: %d | Lives: %d | SPACE: Launch | P: Pause",
+            L"Arkanoid DX11 | Score: %d | Lives: %d",
             m_score,
             m_lives
         );
@@ -987,7 +1010,7 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | Score: %d | Lives: %d | P: Pause",
+            L"Arkanoid DX11 | Score: %d | Lives: %d",
             m_score,
             m_lives
         );
@@ -996,16 +1019,14 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | PAUSED | Score: %d | Lives: %d | P: Resume | ESC: Exit",
-            m_score,
-            m_lives
+            L"Arkanoid DX11 | Paused"
         );
     }
     else if (m_GameState == GameState::Win)
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | YOU WIN | Score: %d | R: Restart | ESC: Exit",
+            L"Arkanoid DX11 | You Win | Score: %d",
             m_score
         );
     }
@@ -1013,7 +1034,7 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | GAME OVER | Score: %d | R: Restart | ESC: Exit",
+            L"Arkanoid DX11 | Game Over | Score: %d",
             m_score
         );
     }
@@ -1411,36 +1432,72 @@ void GameClass::RenderTextUI()
     {
         m_TextRenderer->DrawTitle(
             L"PAUSED",
-            160.0f
+            120.0f
+        );
+
+        m_TextRenderer->DrawMenuItem(
+            L"RESUME",
+            250.0f,
+            m_menuSelectedIndex == 0
+        );
+
+        m_TextRenderer->DrawMenuItem(
+            L"QUIT",
+            315.0f,
+            m_menuSelectedIndex == 1
         );
 
         m_TextRenderer->DrawSmallText(
-            L"P to resume - ESC to quit",
-            280.0f
+            L"UP/DOWN to select - ENTER to confirm",
+            420.0f
         );
     }
     else if (m_GameState == GameState::Win)
     {
         m_TextRenderer->DrawTitle(
             L"YOU WIN",
-            160.0f
+            120.0f
+        );
+
+        m_TextRenderer->DrawMenuItem(
+            L"RESTART",
+            250.0f,
+            m_menuSelectedIndex == 0
+        );
+
+        m_TextRenderer->DrawMenuItem(
+            L"QUIT",
+            315.0f,
+            m_menuSelectedIndex == 1
         );
 
         m_TextRenderer->DrawSmallText(
-            L"R to restart - ESC to quit",
-            280.0f
+            L"UP/DOWN to select - ENTER to confirm",
+            420.0f
         );
     }
     else if (m_GameState == GameState::Lose)
     {
         m_TextRenderer->DrawTitle(
             L"GAME OVER",
-            160.0f
+            120.0f
+        );
+
+        m_TextRenderer->DrawMenuItem(
+            L"RESTART",
+            250.0f,
+            m_menuSelectedIndex == 0
+        );
+
+        m_TextRenderer->DrawMenuItem(
+            L"QUIT",
+            315.0f,
+            m_menuSelectedIndex == 1
         );
 
         m_TextRenderer->DrawSmallText(
-            L"R to restart - ESC to quit",
-            280.0f
+            L"UP/DOWN to select - ENTER to confirm",
+            420.0f
         );
     }
 
@@ -1448,7 +1505,16 @@ void GameClass::RenderTextUI()
 }
 
 
-bool GameClass::HandleMainMenuInput()
+bool GameClass::IsMenuState() const
+{
+    return m_GameState == GameState::MainMenu ||
+        m_GameState == GameState::Paused ||
+        m_GameState == GameState::Win ||
+        m_GameState == GameState::Lose;
+}
+
+
+bool GameClass::HandleMenuInput()
 {
     if (!m_Input)
     {
@@ -1470,11 +1536,11 @@ bool GameClass::HandleMainMenuInput()
     /*
         Cambio selezione.
 
-        Siccome abbiamo solo due voci:
-        - START GAME
-        - QUIT
+        Tutti i menu hanno due voci:
+        - voce 0
+        - voce 1
 
-        basta invertire 0 e 1.
+        Quindi basta alternare tra 0 e 1.
     */
 
     if ((upIsDown && !m_upWasDown) ||
@@ -1497,15 +1563,46 @@ bool GameClass::HandleMainMenuInput()
 
     if (enterIsDown && !m_enterWasDown)
     {
-        if (m_menuSelectedIndex == 0)
+        if (m_GameState == GameState::MainMenu)
         {
-            // START GAME
-            StartNewGame();
+            if (m_menuSelectedIndex == 0)
+            {
+                // START GAME
+                StartNewGame();
+            }
+            else
+            {
+                // QUIT
+                return false;
+            }
         }
-        else
+        else if (m_GameState == GameState::Paused)
         {
-            // QUIT
-            return false;
+            if (m_menuSelectedIndex == 0)
+            {
+                // RESUME
+                m_GameState = GameState::Playing;
+                UpdateWindowTitle();
+            }
+            else
+            {
+                // QUIT
+                return false;
+            }
+        }
+        else if (m_GameState == GameState::Win ||
+            m_GameState == GameState::Lose)
+        {
+            if (m_menuSelectedIndex == 0)
+            {
+                // RESTART
+                ResetGame();
+            }
+            else
+            {
+                // QUIT
+                return false;
+            }
         }
     }
 

@@ -95,7 +95,8 @@ private:
 
     void RenderTextUI();
 
-    bool HandleMainMenuInput();
+    bool HandleMenuInput();
+    bool IsMenuState() const;
 
 
 private:
