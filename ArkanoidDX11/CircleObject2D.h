@@ -7,6 +7,7 @@
 class CircleObject2D
 {
 private:
+    // Deve combaciare con l'input layout di ColorShaderClass
     struct VertexType
     {
         DirectX::XMFLOAT3 position;

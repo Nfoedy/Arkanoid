@@ -4,6 +4,18 @@
 #include <cstring>
 
 
+/*
+    CircleObject2D gestisce un cerchio 2D disegnato con DirectX
+
+    La classe si occupa di:
+    - creare vertex buffer e index buffer
+    - costruire un cerchio tramite triangoli
+    - aggiornare posizione, raggio e colore
+    - fornire i bordi per le collisioni
+*/
+
+
+// Inizializza i valori base del cerchio
 CircleObject2D::CircleObject2D()
 {
     m_vertexBuffer = nullptr;
@@ -25,11 +37,13 @@ CircleObject2D::CircleObject2D()
 }
 
 
+// Distruttore della classe cerchio
 CircleObject2D::~CircleObject2D()
 {
 }
 
 
+// Inizializza il cerchio con posizione, raggio, colore e segmenti
 bool CircleObject2D::Initialize(
     ID3D11Device* device,
     float x,
@@ -56,12 +70,14 @@ bool CircleObject2D::Initialize(
 }
 
 
+// Rilascia le risorse del cerchio
 void CircleObject2D::Shutdown()
 {
     ShutdownBuffers();
 }
 
 
+// Aggiorna e manda il cerchio alla pipeline grafica
 void CircleObject2D::Render(ID3D11DeviceContext* deviceContext)
 {
     UpdateBuffers(deviceContext);
@@ -69,6 +85,7 @@ void CircleObject2D::Render(ID3D11DeviceContext* deviceContext)
 }
 
 
+// Imposta la posizione del cerchio
 void CircleObject2D::SetPosition(float x, float y)
 {
     m_x = x;
@@ -76,12 +93,14 @@ void CircleObject2D::SetPosition(float x, float y)
 }
 
 
+// Imposta il raggio del cerchio
 void CircleObject2D::SetRadius(float radius)
 {
     m_radius = radius;
 }
 
 
+// Imposta il colore del cerchio
 void CircleObject2D::SetColor(float r, float g, float b)
 {
     m_r = r;
@@ -90,67 +109,65 @@ void CircleObject2D::SetColor(float r, float g, float b)
 }
 
 
+// Restituisce la posizione X del cerchio
 float CircleObject2D::GetX() const
 {
     return m_x;
 }
 
 
+// Restituisce la posizione Y del cerchio
 float CircleObject2D::GetY() const
 {
     return m_y;
 }
 
 
+// Restituisce il raggio del cerchio
 float CircleObject2D::GetRadius() const
 {
     return m_radius;
 }
 
 
+// Restituisce il bordo sinistro del cerchio
 float CircleObject2D::GetLeft() const
 {
     return m_x - m_radius;
 }
 
 
+// Restituisce il bordo destro del cerchio
 float CircleObject2D::GetRight() const
 {
     return m_x + m_radius;
 }
 
 
+// Restituisce il bordo superiore del cerchio
 float CircleObject2D::GetTop() const
 {
     return m_y + m_radius;
 }
 
 
+// Restituisce il bordo inferiore del cerchio
 float CircleObject2D::GetBottom() const
 {
     return m_y - m_radius;
 }
 
 
+// Restituisce il numero di indici da disegnare
 int CircleObject2D::GetIndexCount() const
 {
     return m_indexCount;
 }
 
 
+// Crea i buffer necessari per disegnare il cerchio
 bool CircleObject2D::InitializeBuffers(ID3D11Device* device)
 {
-    /*
-        Cerchio disegnato come triangle fan.
-
-        Vertici:
-        - vertice 0 = centro
-        - vertici successivi = bordo del cerchio
-
-        Ogni triangolo:
-        centro, punto bordo A, punto bordo B
-    */
-
     m_vertexCount = m_segments + 2;
     m_indexCount = m_segments * 3;
 
@@ -176,11 +193,6 @@ bool CircleObject2D::InitializeBuffers(ID3D11Device* device)
         indices[index++] = i + 1;
         indices[index++] = i + 2;
     }
-
-    /*
-        Vertex buffer dinamico:
-        la palla si muove, quindi aggiorniamo i vertici ogni frame.
-    */
 
     D3D11_BUFFER_DESC vertexBufferDesc = {};
 
@@ -210,12 +222,6 @@ bool CircleObject2D::InitializeBuffers(ID3D11Device* device)
 
         return false;
     }
-
-
-    /*
-        Index buffer statico:
-        gli indici non cambiano.
-    */
 
     D3D11_BUFFER_DESC indexBufferDesc = {};
 
@@ -253,6 +259,7 @@ bool CircleObject2D::InitializeBuffers(ID3D11Device* device)
 }
 
 
+// Rilascia vertex buffer e index buffer
 void CircleObject2D::ShutdownBuffers()
 {
     if (m_indexBuffer)
@@ -269,6 +276,7 @@ void CircleObject2D::ShutdownBuffers()
 }
 
 
+// Aggiorna i vertici del cerchio
 bool CircleObject2D::UpdateBuffers(ID3D11DeviceContext* deviceContext)
 {
     constexpr float PI = 3.14159265359f;
@@ -280,20 +288,8 @@ bool CircleObject2D::UpdateBuffers(ID3D11DeviceContext* deviceContext)
         return false;
     }
 
-    /*
-        Vertice centrale.
-    */
-
     vertices[0].position = DirectX::XMFLOAT3(m_x, m_y, 0.0f);
     vertices[0].color = DirectX::XMFLOAT4(m_r, m_g, m_b, 1.0f);
-
-
-    /*
-        Vertici del bordo.
-
-        Usiamo angolo negativo per mantenere un winding coerente
-        con il resto dei rettangoli già disegnati.
-    */
 
     for (int i = 0; i <= m_segments; i++)
     {
@@ -305,7 +301,6 @@ bool CircleObject2D::UpdateBuffers(ID3D11DeviceContext* deviceContext)
         vertices[i + 1].position = DirectX::XMFLOAT3(x, y, 0.0f);
         vertices[i + 1].color = DirectX::XMFLOAT4(m_r, m_g, m_b, 1.0f);
     }
-
 
     D3D11_MAPPED_SUBRESOURCE mappedResource = {};
 
@@ -325,7 +320,7 @@ bool CircleObject2D::UpdateBuffers(ID3D11DeviceContext* deviceContext)
 
     VertexType* verticesPtr = static_cast<VertexType*>(mappedResource.pData);
 
-    memcpy(verticesPtr, vertices, sizeof(VertexType) * m_vertexCount);
+    std::memcpy(verticesPtr, vertices, sizeof(VertexType) * m_vertexCount);
 
     deviceContext->Unmap(m_vertexBuffer, 0);
 
@@ -336,6 +331,7 @@ bool CircleObject2D::UpdateBuffers(ID3D11DeviceContext* deviceContext)
 }
 
 
+// Imposta i buffer nella pipeline grafica
 void CircleObject2D::RenderBuffers(ID3D11DeviceContext* deviceContext)
 {
     unsigned int stride = sizeof(VertexType);
