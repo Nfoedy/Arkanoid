@@ -36,9 +36,6 @@
     <ClCompile Include="PaddleClass.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
-    <ClCompile Include="QuadClass..cpp">
-      <Filter>File di origine</Filter>
-    </ClCompile>
     <ClCompile Include="GameClass.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
@@ -77,9 +74,6 @@
     <ClInclude Include="PaddleClass.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
-    <ClInclude Include="QuadClass.h">
-      <Filter>File di intestazione</Filter>
-    </ClInclude>
     <ClInclude Include="GameClass.h">
       <Filter>File di origine</Filter>
     </ClInclude>
@@ -103,7 +97,11 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="color.ps" />
-    <None Include="color.vs" />
+    <None Include="color.ps">
+      <Filter>File di risorse</Filter>
+    </None>
+    <None Include="color.vs">
+      <Filter>File di risorse</Filter>
+    </None>
   </ItemGroup>
 </Project>

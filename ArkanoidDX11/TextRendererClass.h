@@ -11,26 +11,17 @@ public:
     TextRendererClass();
     ~TextRendererClass();
 
-    // Inizializza Direct2D e DirectWrite usando la swap chain DirectX.
     bool Initialize(IDXGISwapChain* swapChain);
-
-    // Rilascia tutte le risorse Direct2D/DirectWrite.
     void Shutdown();
 
-    // Inizio e fine disegno testo.
     void BeginDraw();
     void EndDraw();
 
-    // Disegno testi principali.
     void DrawTitle(const wchar_t* text, float y);
     void DrawMenuItem(const wchar_t* text, float y, bool selected);
     void DrawSmallText(const wchar_t* text, float y);
 
-
-    // Disegna testo HUD in basso a sinistra.
     void DrawBottomLeftText(const wchar_t* text);
-
-    // Disegna testo HUD in basso a destra.
     void DrawBottomRightText(const wchar_t* text);
 
 private:
@@ -50,14 +41,15 @@ private:
 
     IDWriteFactory* m_dwriteFactory;
 
+    // Formati testo usati da menu e HUD
     IDWriteTextFormat* m_titleFormat;
     IDWriteTextFormat* m_menuFormat;
     IDWriteTextFormat* m_smallFormat;
+    IDWriteTextFormat* m_hudLeftFormat;
+    IDWriteTextFormat* m_hudRightFormat;
 
+    // Brush usati per disegnare il testo
     ID2D1SolidColorBrush* m_whiteBrush;
     ID2D1SolidColorBrush* m_yellowBrush;
     ID2D1SolidColorBrush* m_grayBrush;
-
-    IDWriteTextFormat* m_hudLeftFormat;
-    IDWriteTextFormat* m_hudRightFormat;
 };

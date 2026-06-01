@@ -7,6 +7,18 @@
 #pragma comment(lib, "dwrite.lib")
 
 
+/*
+    TextRendererClass gestisce il rendering del testo con DirectWrite e Direct2D
+
+    La classe si occupa di:
+    - creare le risorse Direct2D e DirectWrite
+    - disegnare titoli, menu e testi piccoli
+    - disegnare HUD con score e vite
+    - scrivere direttamente sopra il back buffer DirectX
+*/
+
+
+// Inizializza i puntatori Direct2D e DirectWrite
 TextRendererClass::TextRendererClass()
 {
     m_d2dFactory = nullptr;
@@ -17,21 +29,22 @@ TextRendererClass::TextRendererClass()
     m_titleFormat = nullptr;
     m_menuFormat = nullptr;
     m_smallFormat = nullptr;
+    m_hudLeftFormat = nullptr;
+    m_hudRightFormat = nullptr;
 
     m_whiteBrush = nullptr;
     m_yellowBrush = nullptr;
     m_grayBrush = nullptr;
-
-    m_hudLeftFormat = nullptr;
-    m_hudRightFormat = nullptr;
 }
 
 
+// Distruttore della classe text renderer
 TextRendererClass::~TextRendererClass()
 {
 }
 
 
+// Inizializza Direct2D e DirectWrite sulla swap chain
 bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
 {
     if (!swapChain)
@@ -40,11 +53,6 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
     }
 
     HRESULT result;
-
-
-    /*
-        1. Creazione factory Direct2D.
-    */
 
     result = D2D1CreateFactory(
         D2D1_FACTORY_TYPE_SINGLE_THREADED,
@@ -56,11 +64,6 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
         return false;
     }
 
-
-    /*
-        2. Creazione factory DirectWrite.
-    */
-
     result = DWriteCreateFactory(
         DWRITE_FACTORY_TYPE_SHARED,
         __uuidof(IDWriteFactory),
@@ -71,12 +74,6 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
     {
         return false;
     }
-
-
-    /*
-        3. Recupero del back buffer come superficie DXGI.
-        Direct2D disegnerà su questa superficie.
-    */
 
     IDXGISurface* dxgiBackBuffer = nullptr;
 
@@ -90,11 +87,6 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
     {
         return false;
     }
-
-
-    /*
-        4. Creazione render target Direct2D sopra il back buffer.
-    */
 
     D2D1_RENDER_TARGET_PROPERTIES renderTargetProperties =
         D2D1::RenderTargetProperties(
@@ -118,12 +110,6 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
     {
         return false;
     }
-
-
-    /*
-        5. Creazione formati testo.
-        Qui scegliamo font e dimensioni.
-    */
 
     result = m_dwriteFactory->CreateTextFormat(
         L"Bahnschrift",
@@ -205,11 +191,6 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
         return false;
     }
 
-
-    /*
-        6. Allineamento testo.
-    */
-
     m_titleFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
     m_titleFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
@@ -224,10 +205,6 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
 
     m_hudRightFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
     m_hudRightFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-
-    /*
-        7. Pennelli colore.
-    */
 
     result = m_renderTarget->CreateSolidColorBrush(
         D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f),
@@ -263,6 +240,7 @@ bool TextRendererClass::Initialize(IDXGISwapChain* swapChain)
 }
 
 
+// Rilascia tutte le risorse Direct2D e DirectWrite
 void TextRendererClass::Shutdown()
 {
     if (m_grayBrush)
@@ -333,6 +311,7 @@ void TextRendererClass::Shutdown()
 }
 
 
+// Inizia il rendering del testo
 void TextRendererClass::BeginDraw()
 {
     if (m_renderTarget)
@@ -342,6 +321,7 @@ void TextRendererClass::BeginDraw()
 }
 
 
+// Termina il rendering del testo
 void TextRendererClass::EndDraw()
 {
     if (m_renderTarget)
@@ -351,6 +331,7 @@ void TextRendererClass::EndDraw()
 }
 
 
+// Disegna un titolo centrato
 void TextRendererClass::DrawTitle(const wchar_t* text, float y)
 {
     if (!m_renderTarget)
@@ -372,6 +353,7 @@ void TextRendererClass::DrawTitle(const wchar_t* text, float y)
 }
 
 
+// Disegna una voce di menu
 void TextRendererClass::DrawMenuItem(const wchar_t* text, float y, bool selected)
 {
     if (!m_renderTarget)
@@ -395,6 +377,7 @@ void TextRendererClass::DrawMenuItem(const wchar_t* text, float y, bool selected
 }
 
 
+// Disegna un testo piccolo centrato
 void TextRendererClass::DrawSmallText(const wchar_t* text, float y)
 {
     if (!m_renderTarget)
@@ -416,6 +399,51 @@ void TextRendererClass::DrawSmallText(const wchar_t* text, float y)
 }
 
 
+// Disegna un testo HUD in basso a sinistra
+void TextRendererClass::DrawBottomLeftText(const wchar_t* text)
+{
+    if (!m_renderTarget)
+    {
+        return;
+    }
+
+    D2D1_SIZE_F size = m_renderTarget->GetSize();
+
+    DrawTextLine(
+        text,
+        20.0f,
+        size.height - 45.0f,
+        300.0f,
+        35.0f,
+        m_hudLeftFormat,
+        m_whiteBrush
+    );
+}
+
+
+// Disegna un testo HUD in basso a destra
+void TextRendererClass::DrawBottomRightText(const wchar_t* text)
+{
+    if (!m_renderTarget)
+    {
+        return;
+    }
+
+    D2D1_SIZE_F size = m_renderTarget->GetSize();
+
+    DrawTextLine(
+        text,
+        size.width - 320.0f,
+        size.height - 45.0f,
+        300.0f,
+        35.0f,
+        m_hudRightFormat,
+        m_whiteBrush
+    );
+}
+
+
+// Disegna una singola riga di testo
 void TextRendererClass::DrawTextLine(
     const wchar_t* text,
     float x,
@@ -445,46 +473,5 @@ void TextRendererClass::DrawTextLine(
         format,
         textRect,
         brush
-    );
-}
-
-void TextRendererClass::DrawBottomLeftText(const wchar_t* text)
-{
-    if (!m_renderTarget)
-    {
-        return;
-    }
-
-    D2D1_SIZE_F size = m_renderTarget->GetSize();
-
-    DrawTextLine(
-        text,
-        20.0f,
-        size.height - 45.0f,
-        300.0f,
-        35.0f,
-        m_hudLeftFormat,
-        m_whiteBrush
-    );
-}
-
-
-void TextRendererClass::DrawBottomRightText(const wchar_t* text)
-{
-    if (!m_renderTarget)
-    {
-        return;
-    }
-
-    D2D1_SIZE_F size = m_renderTarget->GetSize();
-
-    DrawTextLine(
-        text,
-        size.width - 320.0f,
-        size.height - 45.0f,
-        300.0f,
-        35.0f,
-        m_hudRightFormat,
-        m_whiteBrush
     );
 }

@@ -9,13 +9,13 @@ public:
     TimerClass();
     ~TimerClass();
 
-    // Inizializza il timer.
+    // Inizializza il timer
     void Initialize();
 
-    // Aggiorna il delta time.
+    // Aggiorna il delta time
     void Frame();
 
-    // Ritorna il tempo passato tra un frame e l'altro, in secondi.
+    // Ritorna il tempo passato tra un frame e l'altro, in secondi
     float GetDeltaTime() const;
 
 private:
