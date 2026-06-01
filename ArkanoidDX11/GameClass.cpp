@@ -1068,6 +1068,9 @@ void GameClass::ResetRound()
 
 void GameClass::HandleBallLost()
 {
+
+    ShutdownPowerUps();
+
     m_lives--;
 
     if (m_lives <= 0)
