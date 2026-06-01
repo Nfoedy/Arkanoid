@@ -3,6 +3,18 @@
 #include <cstring>
 
 
+/*
+    RectObject2D gestisce un rettangolo 2D disegnato con DirectX
+
+    La classe si occupa di:
+    - creare vertex buffer e index buffer
+    - aggiornare posizione, dimensione e colore
+    - mandare i buffer alla pipeline grafica
+    - fornire i bordi per le collisioni AABB
+*/
+
+
+// Inizializza i valori base del rettangolo
 RectObject2D::RectObject2D()
 {
     m_vertexBuffer = nullptr;
@@ -23,11 +35,13 @@ RectObject2D::RectObject2D()
 }
 
 
+// Distruttore della classe rettangolo
 RectObject2D::~RectObject2D()
 {
 }
 
 
+// Inizializza il rettangolo con posizione, dimensione e colore
 bool RectObject2D::Initialize(
     ID3D11Device* device,
     float x,
@@ -53,22 +67,22 @@ bool RectObject2D::Initialize(
 }
 
 
+// Rilascia le risorse del rettangolo
 void RectObject2D::Shutdown()
 {
     ShutdownBuffers();
 }
 
 
+// Aggiorna e manda il rettangolo alla pipeline grafica
 void RectObject2D::Render(ID3D11DeviceContext* deviceContext)
 {
-    // Aggiorniamo i vertici in base ai valori attuali.
     UpdateBuffers(deviceContext);
-
-    // Mandiamo vertex buffer e index buffer alla pipeline.
     RenderBuffers(deviceContext);
 }
 
 
+// Imposta la posizione del rettangolo
 void RectObject2D::SetPosition(float x, float y)
 {
     m_x = x;
@@ -76,6 +90,7 @@ void RectObject2D::SetPosition(float x, float y)
 }
 
 
+// Imposta la dimensione del rettangolo
 void RectObject2D::SetSize(float width, float height)
 {
     m_width = width;
@@ -83,6 +98,7 @@ void RectObject2D::SetSize(float width, float height)
 }
 
 
+// Imposta il colore del rettangolo
 void RectObject2D::SetColor(float r, float g, float b)
 {
     m_r = r;
@@ -91,69 +107,72 @@ void RectObject2D::SetColor(float r, float g, float b)
 }
 
 
+// Restituisce la posizione X del rettangolo
 float RectObject2D::GetX() const
 {
     return m_x;
 }
 
 
+// Restituisce la posizione Y del rettangolo
 float RectObject2D::GetY() const
 {
     return m_y;
 }
 
 
+// Restituisce la larghezza del rettangolo
 float RectObject2D::GetWidth() const
 {
     return m_width;
 }
 
 
+// Restituisce l'altezza del rettangolo
 float RectObject2D::GetHeight() const
 {
     return m_height;
 }
 
 
+// Restituisce il bordo sinistro del rettangolo
 float RectObject2D::GetLeft() const
 {
     return m_x - (m_width * 0.5f);
 }
 
 
+// Restituisce il bordo destro del rettangolo
 float RectObject2D::GetRight() const
 {
     return m_x + (m_width * 0.5f);
 }
 
 
+// Restituisce il bordo superiore del rettangolo
 float RectObject2D::GetTop() const
 {
     return m_y + (m_height * 0.5f);
 }
 
 
+// Restituisce il bordo inferiore del rettangolo
 float RectObject2D::GetBottom() const
 {
     return m_y - (m_height * 0.5f);
 }
 
 
+// Restituisce il numero di indici da disegnare
 int RectObject2D::GetIndexCount() const
 {
     return m_indexCount;
 }
 
 
+// Crea i buffer necessari per disegnare il rettangolo
 bool RectObject2D::InitializeBuffers(ID3D11Device* device)
 {
-    /*
-        Un rettangolo è formato da:
-        - 4 vertici
-        - 6 indici
-        - 2 triangoli
-    */
-
     m_vertexCount = 4;
     m_indexCount = 6;
 
@@ -165,26 +184,11 @@ bool RectObject2D::InitializeBuffers(ID3D11Device* device)
         return false;
     }
 
-    /*
-        Inizializziamo i vertici a zero.
-        La posizione reale viene aggiornata in UpdateBuffers().
-    */
-
     for (int i = 0; i < m_vertexCount; i++)
     {
         vertices[i].position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
         vertices[i].color = DirectX::XMFLOAT4(m_r, m_g, m_b, 1.0f);
     }
-
-    /*
-        Indici del rettangolo:
-
-        0 -------- 1
-        |        / |
-        |      /   |
-        |    /     |
-        3 -------- 2
-    */
 
     indices[0] = 0;
     indices[1] = 1;
@@ -193,15 +197,6 @@ bool RectObject2D::InitializeBuffers(ID3D11Device* device)
     indices[3] = 0;
     indices[4] = 2;
     indices[5] = 3;
-
-
-    /*
-        Vertex buffer dinamico.
-
-        Lo rendiamo dinamico perché paddle e ball si muoveranno.
-        Per i brick non sarebbe strettamente necessario, ma per ora
-        preferiamo avere una classe unica e semplice.
-    */
 
     D3D11_BUFFER_DESC vertexBufferDesc = {};
 
@@ -231,13 +226,6 @@ bool RectObject2D::InitializeBuffers(ID3D11Device* device)
 
         return false;
     }
-
-
-    /*
-        Index buffer statico.
-
-        Gli indici non cambiano mai.
-    */
 
     D3D11_BUFFER_DESC indexBufferDesc = {};
 
@@ -275,6 +263,7 @@ bool RectObject2D::InitializeBuffers(ID3D11Device* device)
 }
 
 
+// Rilascia vertex buffer e index buffer
 void RectObject2D::ShutdownBuffers()
 {
     if (m_indexBuffer)
@@ -291,6 +280,7 @@ void RectObject2D::ShutdownBuffers()
 }
 
 
+// Aggiorna i vertici del rettangolo
 bool RectObject2D::UpdateBuffers(ID3D11DeviceContext* deviceContext)
 {
     float left = GetLeft();
@@ -300,29 +290,17 @@ bool RectObject2D::UpdateBuffers(ID3D11DeviceContext* deviceContext)
 
     VertexType vertices[4];
 
-    // Alto-sinistra
     vertices[0].position = DirectX::XMFLOAT3(left, top, 0.0f);
     vertices[0].color = DirectX::XMFLOAT4(m_r, m_g, m_b, 1.0f);
 
-    // Alto-destra
     vertices[1].position = DirectX::XMFLOAT3(right, top, 0.0f);
     vertices[1].color = DirectX::XMFLOAT4(m_r, m_g, m_b, 1.0f);
 
-    // Basso-destra
     vertices[2].position = DirectX::XMFLOAT3(right, bottom, 0.0f);
     vertices[2].color = DirectX::XMFLOAT4(m_r, m_g, m_b, 1.0f);
 
-    // Basso-sinistra
     vertices[3].position = DirectX::XMFLOAT3(left, bottom, 0.0f);
     vertices[3].color = DirectX::XMFLOAT4(m_r, m_g, m_b, 1.0f);
-
-
-    /*
-        Per aggiornare un buffer dinamico:
-        1. Map()
-        2. memcpy()
-        3. Unmap()
-    */
 
     D3D11_MAPPED_SUBRESOURCE mappedResource = {};
 
@@ -341,7 +319,7 @@ bool RectObject2D::UpdateBuffers(ID3D11DeviceContext* deviceContext)
 
     VertexType* verticesPtr = static_cast<VertexType*>(mappedResource.pData);
 
-    memcpy(verticesPtr, vertices, sizeof(VertexType) * m_vertexCount);
+    std::memcpy(verticesPtr, vertices, sizeof(VertexType) * m_vertexCount);
 
     deviceContext->Unmap(m_vertexBuffer, 0);
 
@@ -349,6 +327,7 @@ bool RectObject2D::UpdateBuffers(ID3D11DeviceContext* deviceContext)
 }
 
 
+// Imposta i buffer nella pipeline grafica
 void RectObject2D::RenderBuffers(ID3D11DeviceContext* deviceContext)
 {
     unsigned int stride = sizeof(VertexType);

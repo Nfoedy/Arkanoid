@@ -5,6 +5,7 @@
 #include "RectObject2D.h"
 
 
+// Tipi di bonus e malus disponibili
 enum class PowerUpType
 {
     PaddleGrow,
