@@ -1,11 +1,23 @@
 #include <cstdlib>
 #include <ctime>
 
-
 #include "GameClass.h"
 #include "GameConfig.h"
 
 
+/*
+    GameClass gestisce il flusso principale del gioco
+
+    La classe si occupa di:
+    - inizializzare e rilasciare i sistemi principali
+    - gestire stati di gioco, menu e input
+    - aggiornare paddle, palle, brick e powerup
+    - controllare collisioni, score, vite, win e lose
+    - coordinare rendering DirectX e testo DirectWrite
+*/
+
+
+// Inizializza i valori base del gioco
 GameClass::GameClass()
 {
     m_screenWidth = 0;
@@ -13,12 +25,13 @@ GameClass::GameClass()
 
     m_D3D = nullptr;
     m_Input = nullptr;
+    m_Timer = nullptr;
     m_ColorShader = nullptr;
+    m_TextRenderer = nullptr;
 
     m_Paddle = nullptr;
     m_Ball = nullptr;
-
-    m_Timer = nullptr;
+    m_SecondBall = nullptr;
 
     m_hwnd = nullptr;
 
@@ -26,8 +39,6 @@ GameClass::GameClass()
     m_lives = GameConfig::InitialLives;
 
     m_pWasDown = false;
-
-    m_TextRenderer = nullptr;
 
     m_isPaddleSizeEffectActive = false;
     m_paddleSizeEffectTimer = 0.0f;
@@ -41,17 +52,17 @@ GameClass::GameClass()
     m_downWasDown = false;
     m_enterWasDown = false;
 
-    m_SecondBall = nullptr;
-
     m_GameState = GameState::MainMenu;
 }
 
 
+// Distruttore della classe gioco
 GameClass::~GameClass()
 {
 }
 
 
+// Inizializza sistemi, oggetti di gioco e stato iniziale
 bool GameClass::Initialize(HWND hwnd, int width, int height)
 {
     m_screenWidth = width;
@@ -61,10 +72,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
 
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
-    /*
-        Inizializzazione Input
-    */
-
+    // Inizializza il sistema di input
     m_Input = new InputClass();
 
     if (!m_Input)
@@ -74,11 +82,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
 
     m_Input->Initialize();
 
-
-    /*
-        Inizializzazione Timer
-    */
-
+    // Inizializza il timer del gioco
     m_Timer = new TimerClass();
 
     if (!m_Timer)
@@ -89,11 +93,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
 
     m_Timer->Initialize();
 
-
-    /*
-        Inizializzazione DirectX
-    */
-
+    // Inizializza DirectX
     m_D3D = new D3DClass();
 
     if (!m_D3D)
@@ -109,10 +109,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
         return false;
     }
 
-    /*
-        Inizializzazione Text Renderer
-    */
-
+    // Inizializza il renderer del testo
     m_TextRenderer = new TextRendererClass();
 
     if (!m_TextRenderer)
@@ -128,11 +125,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
         return false;
     }
 
-
-    /*
-        Inizializzazione Color Shader
-    */
-
+    // Inizializza lo shader colorato
     m_ColorShader = new ColorShaderClass();
 
     if (!m_ColorShader)
@@ -148,11 +141,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
         return false;
     }
 
-
-    /*
-        Inizializzazione Paddle
-    */
-
+    // Inizializza il paddle
     m_Paddle = new PaddleClass();
 
     if (!m_Paddle)
@@ -174,11 +163,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
         return false;
     }
 
-
-    /*
-        Inizializzazione Ball
-    */
-
+    // Inizializza la palla principale
     m_Ball = new BallClass();
 
     if (!m_Ball)
@@ -199,11 +184,7 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
         return false;
     }
 
-
-    /*
-        Inizializzazione Bricks
-    */
-
+    // Inizializza la griglia di brick
     if (!InitializeBricks())
     {
         MessageBox(nullptr, L"Errore inizializzazione Bricks!", L"Errore", MB_OK);
@@ -224,34 +205,16 @@ bool GameClass::Initialize(HWND hwnd, int width, int height)
 }
 
 
+// Rilascia tutte le risorse del gioco
 void GameClass::Shutdown()
 {
+    ShutdownPowerUps();     // Shutdown PowerUps
 
-    /*
-        Shutdown PowerUps
-    */
+    ShutdownBricks();       // Shutdown Bricks
 
-    ShutdownPowerUps();
+    ShutdownSecondBall();   // Shutdown Second Ball
 
-
-    /*
-        Shutdown Bricks
-    */
-
-    ShutdownBricks();
-
-
-    /*
-        Shutdown Second Ball
-    */
-
-    ShutdownSecondBall();
-
-
-    /*
-        Shutdown Ball
-    */
-
+    // Shutdown Ball
     if (m_Ball)
     {
         m_Ball->Shutdown();
@@ -259,11 +222,7 @@ void GameClass::Shutdown()
         m_Ball = nullptr;
     }
 
-
-    /*
-        Shutdown Paddle
-    */
-
+    // Shutdown Paddle
     if (m_Paddle)
     {
         m_Paddle->Shutdown();
@@ -271,11 +230,7 @@ void GameClass::Shutdown()
         m_Paddle = nullptr;
     }
 
-
-    /*
-        Shutdown Color Shader
-    */
-
+    // Shutdown Color Shader
     if (m_ColorShader)
     {
         m_ColorShader->Shutdown();
@@ -283,10 +238,7 @@ void GameClass::Shutdown()
         m_ColorShader = nullptr;
     }
 
-    /*
-        Shutdown Text Renderer
-    */
-
+    // Shutdown Text Renderer
     if (m_TextRenderer)
     {
         m_TextRenderer->Shutdown();
@@ -294,11 +246,7 @@ void GameClass::Shutdown()
         m_TextRenderer = nullptr;
     }
 
-
-    /*
-        Shutdown DirectX
-    */
-
+    // Shutdown DirectX
     if (m_D3D)
     {
         m_D3D->Shutdown();
@@ -306,22 +254,14 @@ void GameClass::Shutdown()
         m_D3D = nullptr;
     }
 
-
-    /*
-        Shutdown Input
-    */
-
+    // Shutdown Input
     if (m_Input)
     {
         delete m_Input;
         m_Input = nullptr;
     }
 
-
-    /*
-        Shutdown Timer
-    */
-
+    // Shutdown Timer
     if (m_Timer)
     {
         delete m_Timer;
@@ -330,6 +270,7 @@ void GameClass::Shutdown()
 }
 
 
+// Gestisce un frame completo del gioco
 bool GameClass::Frame()
 {
     if (!m_Input || !m_Timer)
@@ -341,27 +282,17 @@ bool GameClass::Frame()
 
     float deltaTime = m_Timer->GetDeltaTime();
 
-    // Evita salti enormi se il programma si blocca per un attimo.
     if (deltaTime > 0.05f)
     {
         deltaTime = 0.05f;
     }
 
-    // ESC chiude sempre il gioco.
     if (m_Input->IsKeyDown(VK_ESCAPE))
     {
         return false;
     }
 
-
-    /*
-        Main Menu
-
-        Per ora il menu è controllato da tastiera:
-        ENTER = Play
-        ESC   = Exit
-    */
-
+    // I menu vengono gestiti separatamente dal gameplay
     if (IsMenuState())
     {
         if (!HandleMenuInput())
@@ -374,14 +305,7 @@ bool GameClass::Frame()
         return true;
     }
 
-
-    /*
-        Gestione pausa con P.
-
-        Funziona solo durante Playing e Paused.
-        In Ready non mettiamo in pausa, perché la palla è già ferma.
-    */
-
+    // Durante il gameplay, P apre il menu di pausa
     bool pIsDown = m_Input->IsKeyDown('P');
 
     if (pIsDown && !m_pWasDown)
@@ -398,38 +322,11 @@ bool GameClass::Frame()
 
             UpdateWindowTitle();
         }
-        else if (m_GameState == GameState::Paused)
-        {
-            m_GameState = GameState::Playing;
-            UpdateWindowTitle();
-        }
     }
 
     m_pWasDown = pIsDown;
 
-
-    /*
-        Win / Lose menu
-
-        R = restart
-        ESC = exit, già gestito sopra
-    */
-
-    if (m_Input->IsKeyDown('R') &&
-        (m_GameState == GameState::Win || m_GameState == GameState::Lose))
-    {
-        ResetGame();
-    }
-
-
-    /*
-        Stato Ready
-
-        La palla resta sopra il paddle.
-        Il player può muovere il paddle.
-        SPACE lancia la palla.
-    */
-
+    // In Ready la palla resta agganciata al paddle
     if (m_GameState == GameState::Ready)
     {
         HandleInput(deltaTime);
@@ -464,6 +361,7 @@ bool GameClass::Frame()
 }
 
 
+// Registra la pressione di un tasto
 void GameClass::KeyDown(unsigned int key)
 {
     if (m_Input)
@@ -473,6 +371,7 @@ void GameClass::KeyDown(unsigned int key)
 }
 
 
+// Registra il rilascio di un tasto
 void GameClass::KeyUp(unsigned int key)
 {
     if (m_Input)
@@ -482,6 +381,7 @@ void GameClass::KeyUp(unsigned int key)
 }
 
 
+// Gestisce il movimento del paddle
 void GameClass::HandleInput(float deltaTime)
 {
     if (!m_Input || !m_Paddle)
@@ -501,6 +401,7 @@ void GameClass::HandleInput(float deltaTime)
 }
 
 
+// Aggiorna palle, PowerUp ed effetti attivi
 void GameClass::Update(float deltaTime)
 {
     if (m_Ball)
@@ -519,6 +420,7 @@ void GameClass::Update(float deltaTime)
 }
 
 
+// Disegna scena di gioco, oggetti e UI
 void GameClass::Render()
 {
     if (!m_D3D || !m_ColorShader)
@@ -526,47 +428,32 @@ void GameClass::Render()
         return;
     }
 
-    /*
-        Colore dello sfondo in base allo stato del gioco.
-    */
-
     if (m_GameState == GameState::MainMenu)
     {
-        // Nero/blu scuro: main menu.
         m_D3D->BeginScene(0.02f, 0.02f, 0.08f, 1.0f);
     }
     else if (m_GameState == GameState::Ready)
     {
-        // Blu più scuro: round pronto, palla ferma sopra il paddle.
         m_D3D->BeginScene(0.08f, 0.08f, 0.30f, 1.0f);
     }
     else if (m_GameState == GameState::Playing)
     {
-        // Blu: gioco in corso.
         m_D3D->BeginScene(0.1f, 0.1f, 0.4f, 1.0f);
     }
     else if (m_GameState == GameState::Paused)
     {
-        // Grigio/scuro: pausa.
         m_D3D->BeginScene(0.12f, 0.12f, 0.12f, 1.0f);
     }
     else if (m_GameState == GameState::Win)
     {
-        // Verde: vittoria.
         m_D3D->BeginScene(0.1f, 0.35f, 0.1f, 1.0f);
     }
     else
     {
-        // Rosso: sconfitta.
         m_D3D->BeginScene(0.35f, 0.1f, 0.1f, 1.0f);
     }
 
-
-    /*
-        Nel Main Menu non disegniamo ancora gli oggetti di gioco.
-        Per ora il menu viene comunicato tramite titolo finestra.
-    */
-
+    // Nel Main Menu disegniamo solo la UI testuale
     if (m_GameState == GameState::MainMenu)
     {
         RenderTextUI();
@@ -575,11 +462,7 @@ void GameClass::Render()
         return;
     }
 
-
-    /*
-        Disegno Bricks
-    */
-
+    // Disegna i brick attivi
     for (BrickClass* brick : m_Bricks)
     {
         if (brick && brick->IsActive())
@@ -596,11 +479,7 @@ void GameClass::Render()
         }
     }
 
-
-    /*
-        Disegno Paddle
-    */
-
+    // Disegna il paddle
     if (m_Paddle)
     {
         m_Paddle->Render(m_D3D->GetDeviceContext());
@@ -614,18 +493,10 @@ void GameClass::Render()
         );
     }
 
-
-    /*
-        Disegno PowerUps
-    */
-
+    // Disegna i powerup attivi
     RenderPowerUps();
 
-
-    /*
-        Disegno Ball
-    */
-
+    // Disegna la palla principale
     if (m_Ball)
     {
         m_Ball->Render(m_D3D->GetDeviceContext());
@@ -639,10 +510,7 @@ void GameClass::Render()
         );
     }
 
-    /*
-        Disegno Second Ball
-    */
-
+    // Disegna la seconda palla, se presente
     if (m_SecondBall)
     {
         m_SecondBall->Render(m_D3D->GetDeviceContext());
