@@ -530,6 +530,7 @@ void GameClass::Render()
 }
 
 
+// Crea la griglia iniziale di brick
 bool GameClass::InitializeBricks()
 {
     if (!m_D3D)
@@ -593,6 +594,7 @@ bool GameClass::InitializeBricks()
 }
 
 
+// Rilascia tutti i brick
 void GameClass::ShutdownBricks()
 {
     for (BrickClass* brick : m_Bricks)
@@ -608,6 +610,7 @@ void GameClass::ShutdownBricks()
 }
 
 
+// Controlla una collisione AABB tra due rettangoli
 bool GameClass::CheckAABBCollision(
     float leftA,
     float rightA,
@@ -643,6 +646,7 @@ bool GameClass::CheckAABBCollision(
 }
 
 
+// Gestisce la collisione tra paddle e palla
 void GameClass::CheckPaddleBallCollision(BallClass* ball)
 {
     if (!m_Paddle || !ball)
@@ -667,10 +671,6 @@ void GameClass::CheckPaddleBallCollision(BallClass* ball)
         return;
     }
 
-    /*
-        Calcoliamo centro e dimensioni della palla.
-    */
-
     float ballCenterX =
         (ball->GetLeft() + ball->GetRight()) * 0.5f;
 
@@ -680,29 +680,11 @@ void GameClass::CheckPaddleBallCollision(BallClass* ball)
     float ballRadius =
         (ball->GetRight() - ball->GetLeft()) * 0.5f;
 
-
-    /*
-        Calcoliamo centro del paddle.
-    */
-
     float paddleCenterX =
         (m_Paddle->GetLeft() + m_Paddle->GetRight()) * 0.5f;
 
     float paddleHalfWidth =
         (m_Paddle->GetRight() - m_Paddle->GetLeft()) * 0.5f;
-
-
-    /*
-        CASO 1:
-        Collisione corretta sopra il paddle.
-
-        La consideriamo collisione superiore solo se:
-        - la palla sta scendendo
-        - il centro della palla è sopra il top del paddle
-        - il centro della palla è compreso orizzontalmente nel paddle
-
-        Questo evita il teletrasporto quando il paddle colpisce la palla di lato.
-    */
 
     bool ballCenterInsidePaddleX =
         ballCenterX >= m_Paddle->GetLeft() &&
@@ -711,6 +693,7 @@ void GameClass::CheckPaddleBallCollision(BallClass* ball)
     bool ballCenterAbovePaddleTop =
         ballCenterY >= m_Paddle->GetTop();
 
+    // Se la palla arriva dall'alto, rimbalza sul paddle
     if (ball->IsMovingDown() &&
         ballCenterInsidePaddleX &&
         ballCenterAbovePaddleTop)
@@ -726,22 +709,9 @@ void GameClass::CheckPaddleBallCollision(BallClass* ball)
         return;
     }
 
-
-    /*
-        CASO 2:
-        Collisione laterale.
-
-        Qui NON usiamo BounceFromPaddle(), perché quella funzione
-        sposta la palla sopra il paddle.
-
-        Invece:
-        - spostiamo la palla fuori dal lato colpito
-        - invertiamo la velocità X
-    */
-
+    // Se la palla colpisce il lato del paddle, rimbalza lateralmente
     if (ballCenterX < paddleCenterX)
     {
-        // La palla è sul lato sinistro del paddle.
         ball->SetPosition(
             m_Paddle->GetLeft() - ballRadius,
             ballCenterY
@@ -749,7 +719,6 @@ void GameClass::CheckPaddleBallCollision(BallClass* ball)
     }
     else
     {
-        // La palla è sul lato destro del paddle.
         ball->SetPosition(
             m_Paddle->GetRight() + ballRadius,
             ballCenterY
@@ -760,6 +729,7 @@ void GameClass::CheckPaddleBallCollision(BallClass* ball)
 }
 
 
+// Gestisce la collisione tra palla e brick
 void GameClass::CheckBallBrickCollision(BallClass* ball)
 {
     if (!ball)
@@ -788,17 +758,6 @@ void GameClass::CheckBallBrickCollision(BallClass* ball)
 
         if (isColliding)
         {
-            /*
-                Calcoliamo quanto la palla è entrata nel brick
-                da ogni lato.
-
-                L'idea è:
-                - se la sovrapposizione minore è sull'asse X,
-                  allora la collisione è laterale
-                - se la sovrapposizione minore è sull'asse Y,
-                  allora la collisione è verticale
-            */
-
             float overlapFromLeft = ball->GetRight() - brick->GetLeft();
             float overlapFromRight = brick->GetRight() - ball->GetLeft();
 
@@ -815,11 +774,6 @@ void GameClass::CheckBallBrickCollision(BallClass* ball)
                 ? overlapFromBottom
                 : overlapFromTop;
 
-            /*
-                Disattiviamo il brick colpito.
-                Nel Render(), i brick inattivi non vengono disegnati.
-            */
-
             brick->SetActive(false);
 
             TrySpawnPowerUp(
@@ -827,20 +781,10 @@ void GameClass::CheckBallBrickCollision(BallClass* ball)
                 brick->GetY()
             );
 
-            /*
-                Score.
-            */
-
             m_score += GameConfig::BrickScore;
             UpdateWindowTitle();
 
-            /*
-                Se la penetrazione minore è sull'asse X,
-                significa che la palla ha colpito il brick lateralmente.
-
-                Altrimenti consideriamo la collisione verticale.
-            */
-
+            // La palla rimbalza in base all'asse di penetrazione minore
             if (minOverlapX < minOverlapY)
             {
                 ball->BounceX();
@@ -856,6 +800,7 @@ void GameClass::CheckBallBrickCollision(BallClass* ball)
 }
 
 
+// Controlla se tutti i brick sono stati distrutti
 bool GameClass::AreAllBricksDestroyed() const
 {
     for (BrickClass* brick : m_Bricks)
@@ -870,6 +815,7 @@ bool GameClass::AreAllBricksDestroyed() const
 }
 
 
+// Aggiorna win, lose e perdita delle palle
 void GameClass::CheckGameState()
 {
     if (!m_Ball)
@@ -902,12 +848,14 @@ void GameClass::CheckGameState()
 }
 
 
+// Riavvia una nuova partita
 void GameClass::ResetGame()
 {
     StartNewGame();
 }
 
 
+// Resetta il round corrente
 void GameClass::ResetRound()
 {
     ShutdownSecondBall();
@@ -934,9 +882,9 @@ void GameClass::ResetRound()
 }
 
 
+// Gestisce la perdita di una vita
 void GameClass::HandleBallLost()
 {
-
     ShutdownPowerUps();
 
     m_lives--;
@@ -965,6 +913,7 @@ void GameClass::HandleBallLost()
 }
 
 
+// Aggiorna il titolo della finestra
 void GameClass::UpdateWindowTitle()
 {
     if (!m_hwnd)
@@ -1027,16 +976,13 @@ void GameClass::UpdateWindowTitle()
 }
 
 
+// Posiziona la palla sopra il paddle
 void GameClass::PositionBallOnPaddle()
 {
     if (!m_Paddle || !m_Ball)
     {
         return;
     }
-
-    /*
-        Mettiamo la palla sopra il paddle.
-    */
 
     const float ballHalfSize = GameConfig::BallSize * 0.5f;
 
@@ -1050,17 +996,13 @@ void GameClass::PositionBallOnPaddle()
 }
 
 
+// Lancia la palla dal paddle
 void GameClass::LaunchBall()
 {
     if (!m_Ball)
     {
         return;
     }
-
-    /*
-        Velocità iniziale della palla.
-        Usiamo valori coerenti con il delta time.
-    */
 
     m_Ball->SetVelocity(
         GameConfig::BallInitialVelocityX,
@@ -1073,14 +1015,13 @@ void GameClass::LaunchBall()
 }
 
 
+// Avvia una nuova partita pulita
 void GameClass::StartNewGame()
 {
     m_score = 0;
     m_lives = GameConfig::InitialLives;
 
     m_pWasDown = false;
-
-    ShutdownSecondBall();
 
     ResetActiveEffects();
 
@@ -1097,6 +1038,7 @@ void GameClass::StartNewGame()
 }
 
 
+// Rilascia tutti i powerup attivi
 void GameClass::ShutdownPowerUps()
 {
     for (PowerUpClass* powerUp : m_PowerUps)
@@ -1112,6 +1054,7 @@ void GameClass::ShutdownPowerUps()
 }
 
 
+// Aggiorna e rimuove i powerup inattivi
 void GameClass::UpdatePowerUps(float deltaTime)
 {
     for (auto it = m_PowerUps.begin(); it != m_PowerUps.end(); )
@@ -1129,12 +1072,6 @@ void GameClass::UpdatePowerUps(float deltaTime)
             powerUp->Update(deltaTime);
         }
 
-        /*
-            Dopo l'update, il powerup potrebbe essere diventato inattivo:
-            - raccolto dal paddle
-            - uscito sotto lo schermo
-        */
-
         if (!powerUp->IsActive())
         {
             powerUp->Shutdown();
@@ -1151,6 +1088,7 @@ void GameClass::UpdatePowerUps(float deltaTime)
 }
 
 
+// Disegna tutti i powerup attivi
 void GameClass::RenderPowerUps()
 {
     if (!m_D3D || !m_ColorShader)
@@ -1176,6 +1114,7 @@ void GameClass::RenderPowerUps()
 }
 
 
+// Restituisce un tipo casuale di powerup
 PowerUpType GameClass::GetRandomPowerUpType() const
 {
     int randomValue = std::rand() % 4;
@@ -1199,17 +1138,13 @@ PowerUpType GameClass::GetRandomPowerUpType() const
 }
 
 
+// Prova a creare un powerup dalla posizione del brick
 void GameClass::TrySpawnPowerUp(float x, float y)
 {
     if (!m_D3D)
     {
         return;
     }
-
-    /*
-        Drop chance:
-        GameConfig::PowerUpDropChance = 0.05f significa 5%.
-    */
 
     float randomValue =
         static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
@@ -1246,6 +1181,7 @@ void GameClass::TrySpawnPowerUp(float x, float y)
 }
 
 
+// Controlla la raccolta dei powerup col paddle
 void GameClass::CheckPaddlePowerUpCollision()
 {
     if (!m_Paddle)
@@ -1274,7 +1210,6 @@ void GameClass::CheckPaddlePowerUpCollision()
 
         if (isColliding)
         {
-            
             ApplyPowerUp(powerUp->GetType());
 
             powerUp->SetActive(false);
@@ -1283,6 +1218,7 @@ void GameClass::CheckPaddlePowerUpCollision()
 }
 
 
+// Applica l'effetto del powerup raccolto
 void GameClass::ApplyPowerUp(PowerUpType type)
 {
     if (!m_Paddle || !m_Ball)
@@ -1308,6 +1244,11 @@ void GameClass::ApplyPowerUp(PowerUpType type)
     {
         m_Ball->SetSpeedMultiplier(GameConfig::BallSpeedMultiplier);
 
+        if (m_SecondBall)
+        {
+            m_SecondBall->SetSpeedMultiplier(GameConfig::BallSpeedMultiplier);
+        }
+
         m_isBallSpeedEffectActive = true;
         m_ballSpeedEffectTimer = GameConfig::PowerUpDuration;
     }
@@ -1318,12 +1259,9 @@ void GameClass::ApplyPowerUp(PowerUpType type)
 }
 
 
+// Aggiorna la durata degli effetti temporanei
 void GameClass::UpdateActiveEffects(float deltaTime)
 {
-    /*
-        Effetto temporaneo sulla dimensione del paddle.
-    */
-
     if (m_isPaddleSizeEffectActive)
     {
         m_paddleSizeEffectTimer -= deltaTime;
@@ -1339,11 +1277,6 @@ void GameClass::UpdateActiveEffects(float deltaTime)
             m_paddleSizeEffectTimer = 0.0f;
         }
     }
-
-
-    /*
-        Effetto temporaneo sulla velocità della palla.
-    */
 
     if (m_isBallSpeedEffectActive)
     {
@@ -1368,6 +1301,7 @@ void GameClass::UpdateActiveEffects(float deltaTime)
 }
 
 
+// Resetta tutti gli effetti temporanei
 void GameClass::ResetActiveEffects()
 {
     if (m_Paddle)
@@ -1393,6 +1327,7 @@ void GameClass::ResetActiveEffects()
 }
 
 
+// Disegna menu, istruzioni e HUD
 void GameClass::RenderTextUI()
 {
     if (!m_TextRenderer)
@@ -1506,19 +1441,7 @@ void GameClass::RenderTextUI()
         );
     }
 
-
-    /*
-        HUD di gioco.
-
-        Lo mostriamo durante:
-        - Ready
-        - Playing
-        - Paused
-
-        Non lo mostriamo nel Main Menu.
-        Nei menu Win/Lose per ora abbiamo già il messaggio centrale.
-    */
-
+    // Mostra score e vite durante il gioco
     if (m_GameState == GameState::Ready ||
         m_GameState == GameState::Playing ||
         m_GameState == GameState::Paused)
@@ -1546,6 +1469,7 @@ void GameClass::RenderTextUI()
 }
 
 
+// Controlla se lo stato corrente usa un menu
 bool GameClass::IsMenuState() const
 {
     return m_GameState == GameState::MainMenu ||
@@ -1555,6 +1479,7 @@ bool GameClass::IsMenuState() const
 }
 
 
+// Gestisce navigazione e conferma dei menu
 bool GameClass::HandleMenuInput()
 {
     if (!m_Input)
@@ -1573,17 +1498,6 @@ bool GameClass::HandleMenuInput()
     bool enterIsDown =
         m_Input->IsKeyDown(VK_RETURN);
 
-
-    /*
-        Cambio selezione.
-
-        Tutti i menu hanno due voci:
-        - voce 0
-        - voce 1
-
-        Quindi basta alternare tra 0 e 1.
-    */
-
     if ((upIsDown && !m_upWasDown) ||
         (downIsDown && !m_downWasDown))
     {
@@ -1597,23 +1511,16 @@ bool GameClass::HandleMenuInput()
         }
     }
 
-
-    /*
-        Conferma con ENTER.
-    */
-
     if (enterIsDown && !m_enterWasDown)
     {
         if (m_GameState == GameState::MainMenu)
         {
             if (m_menuSelectedIndex == 0)
             {
-                // START GAME
                 StartNewGame();
             }
             else
             {
-                // QUIT
                 return false;
             }
         }
@@ -1621,13 +1528,11 @@ bool GameClass::HandleMenuInput()
         {
             if (m_menuSelectedIndex == 0)
             {
-                // RESUME
                 m_GameState = GameState::Playing;
                 UpdateWindowTitle();
             }
             else
             {
-                // QUIT
                 return false;
             }
         }
@@ -1636,12 +1541,10 @@ bool GameClass::HandleMenuInput()
         {
             if (m_menuSelectedIndex == 0)
             {
-                // RESTART
                 ResetGame();
             }
             else
             {
-                // QUIT
                 return false;
             }
         }
@@ -1655,6 +1558,7 @@ bool GameClass::HandleMenuInput()
 }
 
 
+// Rilascia la seconda palla
 void GameClass::ShutdownSecondBall()
 {
     if (m_SecondBall)
@@ -1666,17 +1570,13 @@ void GameClass::ShutdownSecondBall()
 }
 
 
+// Crea la seconda palla per il multiball
 void GameClass::SpawnSecondBall()
 {
     if (!m_D3D || !m_Ball)
     {
         return;
     }
-
-    /*
-        Per ora massimo due palle.
-        Se la seconda esiste già, non ne creiamo altre.
-    */
 
     if (m_SecondBall)
     {
@@ -1703,11 +1603,6 @@ void GameClass::SpawnSecondBall()
         return;
     }
 
-    /*
-        La seconda palla parte dalla posizione della prima,
-        ma con direzione orizzontale opposta.
-    */
-
     float velocityX = -m_Ball->GetVelocityX();
     float velocityY = m_Ball->GetVelocityY();
 
@@ -1721,11 +1616,6 @@ void GameClass::SpawnSecondBall()
         velocityY
     );
 
-    /*
-        Se il malus BallSpeedUp è già attivo,
-        anche la seconda palla deve essere veloce.
-    */
-
     if (m_isBallSpeedEffectActive)
     {
         m_SecondBall->SetSpeedMultiplier(GameConfig::BallSpeedMultiplier);
@@ -1733,6 +1623,7 @@ void GameClass::SpawnSecondBall()
 }
 
 
+// Gestisce la perdita delle palle in multiball
 void GameClass::CheckBallsOutOfBounds()
 {
     if (!m_Ball)
@@ -1743,23 +1634,11 @@ void GameClass::CheckBallsOutOfBounds()
     bool mainBallBelow = m_Ball->IsBelowBottom();
     bool secondBallBelow = m_SecondBall && m_SecondBall->IsBelowBottom();
 
-    /*
-        Caso 1:
-        La seconda palla cade, ma la principale è ancora in gioco.
-        Nessuna vita persa.
-    */
-
     if (secondBallBelow && !mainBallBelow)
     {
         ShutdownSecondBall();
         return;
     }
-
-    /*
-        Caso 2:
-        La palla principale cade, ma la seconda è ancora in gioco.
-        Non perdiamo vita: promuoviamo la seconda a palla principale.
-    */
 
     if (mainBallBelow && m_SecondBall && !secondBallBelow)
     {
@@ -1771,13 +1650,6 @@ void GameClass::CheckBallsOutOfBounds()
 
         return;
     }
-
-    /*
-        Caso 3:
-        C'è solo una palla ed è caduta,
-        oppure sono cadute entrambe.
-        Qui perdiamo una vita.
-    */
 
     if (mainBallBelow)
     {
