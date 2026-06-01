@@ -41,6 +41,8 @@ GameClass::GameClass()
     m_downWasDown = false;
     m_enterWasDown = false;
 
+    m_SecondBall = nullptr;
+
     m_GameState = GameState::MainMenu;
 }
 
@@ -237,6 +239,13 @@ void GameClass::Shutdown()
     */
 
     ShutdownBricks();
+
+
+    /*
+        Shutdown Second Ball
+    */
+
+    ShutdownSecondBall();
 
 
     /*
@@ -438,9 +447,11 @@ bool GameClass::Frame()
 
         Update(deltaTime);
 
-        CheckPaddleBallCollision();
+        CheckPaddleBallCollision(m_Ball);
+        CheckPaddleBallCollision(m_SecondBall);
 
-        CheckBallBrickCollision();
+        CheckBallBrickCollision(m_Ball);
+        CheckBallBrickCollision(m_SecondBall);
 
         CheckPaddlePowerUpCollision();
 
@@ -495,6 +506,11 @@ void GameClass::Update(float deltaTime)
     if (m_Ball)
     {
         m_Ball->Update(deltaTime);
+    }
+
+    if (m_SecondBall)
+    {
+        m_SecondBall->Update(deltaTime);
     }
 
     UpdatePowerUps(deltaTime);
@@ -623,6 +639,23 @@ void GameClass::Render()
         );
     }
 
+    /*
+        Disegno Second Ball
+    */
+
+    if (m_SecondBall)
+    {
+        m_SecondBall->Render(m_D3D->GetDeviceContext());
+
+        m_ColorShader->RenderShader(m_D3D->GetDeviceContext());
+
+        m_D3D->GetDeviceContext()->DrawIndexed(
+            m_SecondBall->GetIndexCount(),
+            0,
+            0
+        );
+    }
+
     RenderTextUI();
 
     m_D3D->EndScene();
@@ -742,9 +775,9 @@ bool GameClass::CheckAABBCollision(
 }
 
 
-void GameClass::CheckPaddleBallCollision()
+void GameClass::CheckPaddleBallCollision(BallClass* ball)
 {
-    if (!m_Paddle || !m_Ball)
+    if (!m_Paddle || !ball)
     {
         return;
     }
@@ -755,10 +788,10 @@ void GameClass::CheckPaddleBallCollision()
         m_Paddle->GetTop(),
         m_Paddle->GetBottom(),
 
-        m_Ball->GetLeft(),
-        m_Ball->GetRight(),
-        m_Ball->GetTop(),
-        m_Ball->GetBottom()
+        ball->GetLeft(),
+        ball->GetRight(),
+        ball->GetTop(),
+        ball->GetBottom()
     );
 
     if (!isColliding)
@@ -771,13 +804,13 @@ void GameClass::CheckPaddleBallCollision()
     */
 
     float ballCenterX =
-        (m_Ball->GetLeft() + m_Ball->GetRight()) * 0.5f;
+        (ball->GetLeft() + ball->GetRight()) * 0.5f;
 
     float ballCenterY =
-        (m_Ball->GetTop() + m_Ball->GetBottom()) * 0.5f;
+        (ball->GetTop() + ball->GetBottom()) * 0.5f;
 
     float ballRadius =
-        (m_Ball->GetRight() - m_Ball->GetLeft()) * 0.5f;
+        (ball->GetRight() - ball->GetLeft()) * 0.5f;
 
 
     /*
@@ -810,14 +843,14 @@ void GameClass::CheckPaddleBallCollision()
     bool ballCenterAbovePaddleTop =
         ballCenterY >= m_Paddle->GetTop();
 
-    if (m_Ball->IsMovingDown() &&
+    if (ball->IsMovingDown() &&
         ballCenterInsidePaddleX &&
         ballCenterAbovePaddleTop)
     {
         float hitFactor =
             (ballCenterX - paddleCenterX) / paddleHalfWidth;
 
-        m_Ball->BounceFromPaddle(
+        ball->BounceFromPaddle(
             m_Paddle->GetTop(),
             hitFactor
         );
@@ -841,7 +874,7 @@ void GameClass::CheckPaddleBallCollision()
     if (ballCenterX < paddleCenterX)
     {
         // La palla è sul lato sinistro del paddle.
-        m_Ball->SetPosition(
+        ball->SetPosition(
             m_Paddle->GetLeft() - ballRadius,
             ballCenterY
         );
@@ -849,19 +882,19 @@ void GameClass::CheckPaddleBallCollision()
     else
     {
         // La palla è sul lato destro del paddle.
-        m_Ball->SetPosition(
+        ball->SetPosition(
             m_Paddle->GetRight() + ballRadius,
             ballCenterY
         );
     }
 
-    m_Ball->BounceX();
+    ball->BounceX();
 }
 
 
-void GameClass::CheckBallBrickCollision()
+void GameClass::CheckBallBrickCollision(BallClass* ball)
 {
-    if (!m_Ball)
+    if (!ball)
     {
         return;
     }
@@ -874,10 +907,10 @@ void GameClass::CheckBallBrickCollision()
         }
 
         bool isColliding = CheckAABBCollision(
-            m_Ball->GetLeft(),
-            m_Ball->GetRight(),
-            m_Ball->GetTop(),
-            m_Ball->GetBottom(),
+            ball->GetLeft(),
+            ball->GetRight(),
+            ball->GetTop(),
+            ball->GetBottom(),
 
             brick->GetLeft(),
             brick->GetRight(),
@@ -898,11 +931,11 @@ void GameClass::CheckBallBrickCollision()
                   allora la collisione è verticale
             */
 
-            float overlapFromLeft = m_Ball->GetRight() - brick->GetLeft();
-            float overlapFromRight = brick->GetRight() - m_Ball->GetLeft();
+            float overlapFromLeft = ball->GetRight() - brick->GetLeft();
+            float overlapFromRight = brick->GetRight() - ball->GetLeft();
 
-            float overlapFromBottom = m_Ball->GetTop() - brick->GetBottom();
-            float overlapFromTop = brick->GetTop() - m_Ball->GetBottom();
+            float overlapFromBottom = ball->GetTop() - brick->GetBottom();
+            float overlapFromTop = brick->GetTop() - ball->GetBottom();
 
             float minOverlapX =
                 overlapFromLeft < overlapFromRight
@@ -942,11 +975,11 @@ void GameClass::CheckBallBrickCollision()
 
             if (minOverlapX < minOverlapY)
             {
-                m_Ball->BounceX();
+                ball->BounceX();
             }
             else
             {
-                m_Ball->BounceY();
+                ball->BounceY();
             }
 
             break;
@@ -976,9 +1009,11 @@ void GameClass::CheckGameState()
         return;
     }
 
-    if (m_Ball->IsBelowBottom())
+    CheckBallsOutOfBounds();
+
+    if (m_GameState == GameState::Ready ||
+        m_GameState == GameState::Lose)
     {
-        HandleBallLost();
         return;
     }
 
@@ -1007,6 +1042,8 @@ void GameClass::ResetGame()
 
 void GameClass::ResetRound()
 {
+    ShutdownSecondBall();
+
     ResetActiveEffects();
 
     if (m_Paddle)
@@ -1172,6 +1209,8 @@ void GameClass::StartNewGame()
 
     m_pWasDown = false;
 
+    ShutdownSecondBall();
+
     ResetActiveEffects();
 
     ShutdownPowerUps();
@@ -1268,7 +1307,7 @@ void GameClass::RenderPowerUps()
 
 PowerUpType GameClass::GetRandomPowerUpType() const
 {
-    int randomValue = std::rand() % 3;
+    int randomValue = std::rand() % 4;
 
     if (randomValue == 0)
     {
@@ -1280,7 +1319,12 @@ PowerUpType GameClass::GetRandomPowerUpType() const
         return PowerUpType::PaddleShrink;
     }
 
-    return PowerUpType::BallSpeedUp;
+    if (randomValue == 2)
+    {
+        return PowerUpType::BallSpeedUp;
+    }
+
+    return PowerUpType::MultiBall;
 }
 
 
@@ -1396,6 +1440,10 @@ void GameClass::ApplyPowerUp(PowerUpType type)
         m_isBallSpeedEffectActive = true;
         m_ballSpeedEffectTimer = GameConfig::PowerUpDuration;
     }
+    else if (type == PowerUpType::MultiBall)
+    {
+        SpawnSecondBall();
+    }
 }
 
 
@@ -1437,6 +1485,11 @@ void GameClass::UpdateActiveEffects(float deltaTime)
                 m_Ball->SetSpeedMultiplier(1.0f);
             }
 
+            if (m_SecondBall)
+            {
+                m_SecondBall->SetSpeedMultiplier(1.0f);
+            }
+
             m_isBallSpeedEffectActive = false;
             m_ballSpeedEffectTimer = 0.0f;
         }
@@ -1454,6 +1507,11 @@ void GameClass::ResetActiveEffects()
     if (m_Ball)
     {
         m_Ball->SetSpeedMultiplier(1.0f);
+    }
+
+    if (m_SecondBall)
+    {
+        m_SecondBall->SetSpeedMultiplier(1.0f);
     }
 
     m_isPaddleSizeEffectActive = false;
@@ -1723,4 +1781,136 @@ bool GameClass::HandleMenuInput()
     m_enterWasDown = enterIsDown;
 
     return true;
+}
+
+
+void GameClass::ShutdownSecondBall()
+{
+    if (m_SecondBall)
+    {
+        m_SecondBall->Shutdown();
+        delete m_SecondBall;
+        m_SecondBall = nullptr;
+    }
+}
+
+
+void GameClass::SpawnSecondBall()
+{
+    if (!m_D3D || !m_Ball)
+    {
+        return;
+    }
+
+    /*
+        Per ora massimo due palle.
+        Se la seconda esiste già, non ne creiamo altre.
+    */
+
+    if (m_SecondBall)
+    {
+        return;
+    }
+
+    m_SecondBall = new BallClass();
+
+    if (!m_SecondBall)
+    {
+        return;
+    }
+
+    if (!m_SecondBall->Initialize(
+        m_D3D->GetDevice(),
+        m_Ball->GetX(),
+        m_Ball->GetY(),
+        GameConfig::BallSize
+    ))
+    {
+        m_SecondBall->Shutdown();
+        delete m_SecondBall;
+        m_SecondBall = nullptr;
+        return;
+    }
+
+    /*
+        La seconda palla parte dalla posizione della prima,
+        ma con direzione orizzontale opposta.
+    */
+
+    float velocityX = -m_Ball->GetVelocityX();
+    float velocityY = m_Ball->GetVelocityY();
+
+    if (velocityX > -0.05f && velocityX < 0.05f)
+    {
+        velocityX = -GameConfig::BallInitialVelocityX;
+    }
+
+    m_SecondBall->SetVelocity(
+        velocityX,
+        velocityY
+    );
+
+    /*
+        Se il malus BallSpeedUp è già attivo,
+        anche la seconda palla deve essere veloce.
+    */
+
+    if (m_isBallSpeedEffectActive)
+    {
+        m_SecondBall->SetSpeedMultiplier(GameConfig::BallSpeedMultiplier);
+    }
+}
+
+
+void GameClass::CheckBallsOutOfBounds()
+{
+    if (!m_Ball)
+    {
+        return;
+    }
+
+    bool mainBallBelow = m_Ball->IsBelowBottom();
+    bool secondBallBelow = m_SecondBall && m_SecondBall->IsBelowBottom();
+
+    /*
+        Caso 1:
+        La seconda palla cade, ma la principale è ancora in gioco.
+        Nessuna vita persa.
+    */
+
+    if (secondBallBelow && !mainBallBelow)
+    {
+        ShutdownSecondBall();
+        return;
+    }
+
+    /*
+        Caso 2:
+        La palla principale cade, ma la seconda è ancora in gioco.
+        Non perdiamo vita: promuoviamo la seconda a palla principale.
+    */
+
+    if (mainBallBelow && m_SecondBall && !secondBallBelow)
+    {
+        m_Ball->Shutdown();
+        delete m_Ball;
+
+        m_Ball = m_SecondBall;
+        m_SecondBall = nullptr;
+
+        return;
+    }
+
+    /*
+        Caso 3:
+        C'è solo una palla ed è caduta,
+        oppure sono cadute entrambe.
+        Qui perdiamo una vita.
+    */
+
+    if (mainBallBelow)
+    {
+        ShutdownSecondBall();
+        HandleBallLost();
+    }
 }

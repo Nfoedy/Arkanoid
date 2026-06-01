@@ -30,11 +30,11 @@ namespace GameConfig
 
     constexpr float BallSize = 0.06f;
 
-    constexpr float BallInitialVelocityX = 0.60f;
-    constexpr float BallInitialVelocityY = 0.78f;
+    constexpr float BallInitialVelocityX = 0.85f;
+    constexpr float BallInitialVelocityY = 1.10f;
 
-    constexpr float BallMaxHorizontalSpeed = 0.78f;
-    constexpr float BallMinHorizontalSpeed = 0.22f;
+    constexpr float BallMaxHorizontalSpeed = 1.05f;
+    constexpr float BallMinHorizontalSpeed = 0.30f;
 
 
 
@@ -67,13 +67,13 @@ namespace GameConfig
     // PowerUps / Malus
     // ============================================================
 
-    constexpr float PowerUpDropChance = 0.20f;
+    constexpr float PowerUpDropChance = 0.2f;
     constexpr float PowerUpFallSpeed = 0.6f;
     constexpr float PowerUpSize = 0.06f;
-    constexpr float PowerUpDuration = 6.0f;
+    constexpr float PowerUpDuration = 10.0f;
 
     constexpr float PaddleGrowWidth = 0.55f;
     constexpr float PaddleShrinkWidth = 0.24f;
 
-    constexpr float BallSpeedMultiplier = 1.5f;
+    constexpr float BallSpeedMultiplier = 1.6f;
 }

@@ -9,7 +9,8 @@ enum class PowerUpType
 {
     PaddleGrow,
     PaddleShrink,
-    BallSpeedUp
+    BallSpeedUp,
+    MultiBall
 };
 
 

@@ -257,3 +257,27 @@ void BallClass::SetSpeedMultiplier(float multiplier)
 {
     m_speedMultiplier = multiplier;
 }
+
+
+float BallClass::GetX() const
+{
+    return m_Circle.GetX();
+}
+
+
+float BallClass::GetY() const
+{
+    return m_Circle.GetY();
+}
+
+
+float BallClass::GetVelocityX() const
+{
+    return m_velocityX;
+}
+
+
+float BallClass::GetVelocityY() const
+{
+    return m_velocityY;
+}

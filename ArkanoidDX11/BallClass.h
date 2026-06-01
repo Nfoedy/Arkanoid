@@ -63,6 +63,12 @@ public:
     // > 1.0f = palla più veloce.
     void SetSpeedMultiplier(float multiplier);
 
+    float GetX() const;
+    float GetY() const;
+
+    float GetVelocityX() const;
+    float GetVelocityY() const;
+
 private:
     void CheckWallCollision();
 

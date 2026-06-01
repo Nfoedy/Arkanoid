@@ -98,6 +98,13 @@ private:
     bool HandleMenuInput();
     bool IsMenuState() const;
 
+    void SpawnSecondBall();
+    void ShutdownSecondBall();
+
+    void CheckPaddleBallCollision(BallClass* ball);
+    void CheckBallBrickCollision(BallClass* ball);
+    void CheckBallsOutOfBounds();
+
 
 private:
     int m_screenWidth;
@@ -136,6 +143,8 @@ private:
     std::vector<BrickClass*> m_Bricks;
 
     GameState m_GameState;
+
+    BallClass* m_SecondBall;
 
     std::vector<PowerUpClass*> m_PowerUps;
 };
