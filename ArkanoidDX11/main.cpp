@@ -60,7 +60,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
     const int HEIGHT = GameConfig::ScreenHeight;
 
     // Titolo della finestra
-    const wchar_t* CLASS_NAME = L"ArkanoidDX11WindowClass";
+    const wchar_t* CLASS_NAME = L"ArkanoidDXWindowClass";
 
 
     /*
@@ -99,7 +99,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
     HWND hwnd = CreateWindowEx(
         0,
         CLASS_NAME,
-        L"Arkanoid DX11",
+        L"Arkanoid DX",
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,

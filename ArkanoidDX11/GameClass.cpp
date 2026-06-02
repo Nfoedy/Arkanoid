@@ -927,14 +927,14 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | Main Menu"
+            L"Arkanoid DX | Main Menu"
         );
     }
     else if (m_GameState == GameState::Ready)
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | Score: %d | Lives: %d",
+            L"Arkanoid DX | Score: %d | Lives: %d",
             m_score,
             m_lives
         );
@@ -943,7 +943,7 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | Score: %d | Lives: %d",
+            L"Arkanoid DX | Score: %d | Lives: %d",
             m_score,
             m_lives
         );
@@ -952,14 +952,14 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | Paused"
+            L"Arkanoid DX | Paused"
         );
     }
     else if (m_GameState == GameState::Win)
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | You Win | Score: %d",
+            L"Arkanoid DX | You Win | Score: %d",
             m_score
         );
     }
@@ -967,7 +967,7 @@ void GameClass::UpdateWindowTitle()
     {
         swprintf_s(
             title,
-            L"Arkanoid DX11 | Game Over | Score: %d",
+            L"Arkanoid DX | Game Over | Score: %d",
             m_score
         );
     }
@@ -1340,7 +1340,7 @@ void GameClass::RenderTextUI()
     if (m_GameState == GameState::MainMenu)
     {
         m_TextRenderer->DrawTitle(
-            L"ARKANOID DX11",
+            L"ARKANOID DX",
             90.0f
         );
 
