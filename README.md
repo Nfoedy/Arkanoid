@@ -125,4 +125,4 @@ Il progetto è diviso in classi con responsabilità separate.
 
 ## 📸 Video & Media
 
-Gameplay video: 
+Gameplay video: https://youtu.be/1z2ApO88u-4
